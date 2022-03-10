@@ -43,7 +43,7 @@ RELEASE = v1.23.0
 GOOS ?= linux
 ARCH ?= amd64
 
-SRC_DIRS := cmd pkg # directories which hold app source (not vendored)
+SRC_DIRS := cmd controllers pkg # directories which hold app source (not vendored)
 
 # Allows overriding where the CCM should look for the cloud provider config
 # when running via make run-dev.
@@ -202,3 +202,12 @@ test-local: build-dirs
 run-ccm-e2e-tests-local:
 	./hack/run_e2e_test.sh
 
+
+# NPN
+.PHONY: install-controller-runtime
+install-controller-runtime:
+	go install sigs.k8s.io/controller-tools/cmd/controller-gen@v0.7.0
+
+.PHONY: npn-generate
+npn-generate:
+	$(GOPATH)/bin/controller-gen object:headerFile="hack/boilerplate.go.txt" paths="./api/..."

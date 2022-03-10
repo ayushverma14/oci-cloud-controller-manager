@@ -150,9 +150,17 @@ func (p *MockProvisionerClient) BlockStorage() client.BlockStorageInterface {
 type MockVirtualNetworkClient struct {
 }
 
-// GetPrivateIP mocks the VirtualNetwork GetPrivateIP implementation
-func (c *MockVirtualNetworkClient) GetPrivateIP(ctx context.Context, id string) (*core.PrivateIp, error) {
+// GetPrivateIp mocks the VirtualNetwork GetPrivateIp implementation
+func (c *MockVirtualNetworkClient) GetPrivateIp(ctx context.Context, id string) (*core.PrivateIp, error) {
 	return nil, nil
+}
+
+func (c *MockVirtualNetworkClient) CreatePrivateIp(ctx context.Context, vnicId string) (*core.PrivateIp, error) {
+	return &core.PrivateIp{}, nil
+}
+
+func (c *MockVirtualNetworkClient) ListPrivateIps(ctx context.Context, id string) ([]core.PrivateIp, error) {
+	return []core.PrivateIp{}, nil
 }
 
 func (c *MockVirtualNetworkClient) GetSubnet(ctx context.Context, id string) (*core.Subnet, error) {
@@ -165,6 +173,10 @@ func (c *MockVirtualNetworkClient) GetSubnetFromCacheByIP(ip string) (*core.Subn
 
 func (c *MockVirtualNetworkClient) GetVcn(ctx context.Context, id string) (*core.Vcn, error) {
 	return &core.Vcn{}, nil
+}
+
+func (c *MockVirtualNetworkClient) GetVNIC(ctx context.Context, id string) (*core.Vnic, error) {
+	return &core.Vnic{}, nil
 }
 
 func (c *MockVirtualNetworkClient) GetSecurityList(ctx context.Context, id string) (core.GetSecurityListResponse, error) {
@@ -281,6 +293,14 @@ func (c *MockComputeClient) GetInstanceByNodeName(ctx context.Context, compartme
 
 func (c *MockComputeClient) GetPrimaryVNICForInstance(ctx context.Context, compartmentID, instanceID string) (*core.Vnic, error) {
 	return nil, nil
+}
+
+func (c *MockComputeClient) ListVnicAttachments(ctx context.Context, compartmentID, instanceID string) ([]core.VnicAttachment, error) {
+	return nil, nil
+}
+
+func (c *MockComputeClient) AttachVnic(ctx context.Context, instanceID, subnetID *string, nsgIds []*string, skipSourceDestCheck *bool) (response core.VnicAttachment, err error) {
+	return core.VnicAttachment{}, nil
 }
 
 func (c *MockComputeClient) FindVolumeAttachment(ctx context.Context, compartmentID, volumeID string) (core.VolumeAttachment, error) {

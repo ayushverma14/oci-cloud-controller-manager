@@ -156,6 +156,10 @@ func (c *mockComputeClient) ListVnicAttachments(ctx context.Context, request cor
 	return core.ListVnicAttachmentsResponse{}, nil
 }
 
+func (c *mockComputeClient) AttachVnic(ctx context.Context, request core.AttachVnicRequest) (response core.AttachVnicResponse, err error) {
+	return core.AttachVnicResponse{}, nil
+}
+
 func (c *mockComputeClient) GetVolumeAttachment(ctx context.Context, request core.GetVolumeAttachmentRequest) (response core.GetVolumeAttachmentResponse, err error) {
 	return core.GetVolumeAttachmentResponse{}, nil
 }
@@ -199,6 +203,14 @@ func (c *mockVirtualNetworkClient) UpdateSecurityList(ctx context.Context, reque
 
 func (c *mockVirtualNetworkClient) GetPrivateIp(ctx context.Context, request core.GetPrivateIpRequest) (response core.GetPrivateIpResponse, err error) {
 	return core.GetPrivateIpResponse{}, nil
+}
+
+func (c *mockVirtualNetworkClient) ListPrivateIps(ctx context.Context, request core.ListPrivateIpsRequest) (response core.ListPrivateIpsResponse, err error) {
+	return core.ListPrivateIpsResponse{}, nil
+}
+
+func (c *mockVirtualNetworkClient) CreatePrivateIp(ctx context.Context, request core.CreatePrivateIpRequest) (response core.CreatePrivateIpResponse, err error) {
+	return core.CreatePrivateIpResponse{}, nil
 }
 
 func (c *mockVirtualNetworkClient) GetPublicIpByIpAddress(ctx context.Context, request core.GetPublicIpByIpAddressRequest) (response core.GetPublicIpByIpAddressResponse, err error) {

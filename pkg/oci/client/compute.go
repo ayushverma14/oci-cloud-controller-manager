@@ -33,6 +33,9 @@ type ComputeInterface interface {
 
 	GetPrimaryVNICForInstance(ctx context.Context, compartmentID, instanceID string) (*core.Vnic, error)
 
+	ListVnicAttachments(ctx context.Context, compartmentID, instanceID string) (response []core.VnicAttachment, err error)
+	AttachVnic(ctx context.Context, instanceID, subnetId *string, nsgIds []*string, skipSourceDestCheck *bool) (response core.VnicAttachment, err error)
+
 	VolumeAttachmentInterface
 }
 
@@ -232,6 +235,74 @@ func (c *client) GetInstanceByNodeName(ctx context.Context, compartmentID, vcnID
 	return instances[0], nil
 }
 
+func (c *client) ListVnicAttachments(ctx context.Context, compartmentID, instanceID string) (response []core.VnicAttachment, err error) {
+	logger := c.logger.With("instanceId", instanceID, "compartmentId", compartmentID)
+	var page *string
+	vnicAttachments := make([]core.VnicAttachment, 0)
+
+	for {
+		if !c.rateLimiter.Reader.TryAccept() {
+			return response, RateLimitError(false, "ListVnicAttachments")
+		}
+		resp, err := c.listVNICAttachments(ctx, core.ListVnicAttachmentsRequest{
+			InstanceId:      &instanceID,
+			CompartmentId:   &compartmentID,
+			Page:            page,
+			RequestMetadata: c.requestMetadata,
+		})
+
+		if err != nil {
+			return nil, err
+		}
+
+		for _, attachment := range resp.Items {
+			if attachment.LifecycleState != core.VnicAttachmentLifecycleStateAttached && attachment.LifecycleState != core.VnicAttachmentLifecycleStateAttaching {
+				logger.With("vnicAttachmentId", *attachment.Id).Info("VNIC attachment is not in attached/attaching state")
+				continue
+			}
+
+			if attachment.VnicId == nil {
+				// Should never happen but lets be extra cautious as field is non-mandatory in OCI API.
+				logger.With("vnicAttachmentId", *attachment.Id).Error("VNIC attachment is attached but has no VNIC ID")
+				continue
+			}
+
+			vnicAttachments = append(vnicAttachments, attachment)
+		}
+
+		if page = resp.OpcNextPage; resp.OpcNextPage == nil {
+			break
+		}
+	}
+
+	return vnicAttachments, nil
+}
+
+func (c *client) AttachVnic(ctx context.Context, instanceID, subnetId *string, nsgIds []*string, skipSourceDestCheck *bool) (response core.VnicAttachment, err error) {
+	if !c.rateLimiter.Reader.TryAccept() {
+		return response, RateLimitError(false, "AttachVnic")
+	}
+
+	requestMetadata := getDefaultRequestMetadata(c.requestMetadata)
+	resp, err := c.compute.AttachVnic(ctx, core.AttachVnicRequest{
+		AttachVnicDetails: core.AttachVnicDetails{
+			CreateVnicDetails: &core.CreateVnicDetails{
+				SubnetId:            subnetId,
+				NsgIds:              stringPointerToStringSlice(nsgIds),
+				SkipSourceDestCheck: skipSourceDestCheck,
+			},
+			InstanceId: instanceID,
+		},
+		RequestMetadata: requestMetadata})
+	incRequestCounter(err, listVerb, vnicAttachmentResource)
+
+	if err != nil {
+		return response, errors.WithStack(err)
+	}
+
+	return resp.VnicAttachment, nil
+}
+
 // IsInstanceInTerminalState returns true if the instance is in a terminal state, false otherwise.
 func IsInstanceInTerminalState(instance *core.Instance) bool {
 	return instance.LifecycleState == core.InstanceLifecycleStateTerminated ||
@@ -252,4 +323,12 @@ func getNonTerminalInstances(instances []core.Instance) []core.Instance {
 		}
 	}
 	return result
+}
+
+func stringPointerToStringSlice(original []*string) []string {
+	stringArray := make([]string, 0, len(original))
+	for _, value := range original {
+		stringArray = append(stringArray, *value)
+	}
+	return stringArray
 }

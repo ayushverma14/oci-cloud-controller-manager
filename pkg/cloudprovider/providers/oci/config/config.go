@@ -291,3 +291,25 @@ func NewConfigurationProvider(cfg *Config) (common.ConfigurationProvider, error)
 
 	return conf, nil
 }
+
+func GetConfig(logger *zap.SugaredLogger, configPath string) *Config {
+	cfg, err := FromFile(configPath)
+	if err != nil {
+		logger.With(zap.Error(err)).With("config", configPath).Fatal("Failed to load configuration file from given path.")
+	}
+
+	err = cfg.Validate()
+	if err != nil {
+		logger.With(zap.Error(err)).With("config", configPath).Fatal("Failed to validate. Invalid configuration.")
+	}
+
+	if cfg.CompartmentID == "" {
+		metadata, err := metadata.New().Get()
+		if err != nil {
+			logger.With(zap.Error(err)).With("config", configPath).Fatalf("Neither CompartmentID is given. Nor able to retrieve compartment OCID from metadata.")
+		}
+		cfg.CompartmentID = metadata.CompartmentID
+	}
+
+	return cfg
+}
