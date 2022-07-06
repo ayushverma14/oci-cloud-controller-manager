@@ -1,0 +1,16 @@
+#!/usr/bin/env bash
+
+# Manually set deployment ID trumps everything else - set this in dev-env-template.sh
+if [ -n "$OKE_DEPLOYMENT_ID" ]; then
+  echo $OKE_DEPLOYMENT_ID
+  exit 0
+fi
+
+USER_ID=$(git config user.email | sed -e 's/\@.*//' |
+    awk '{n=split($0,a,"."); for(i=0;i<=n;i=i+1){printf("%s",substr(a[i],0,1))} }')
+
+if [ ! -n "$USER_ID" ]; then
+  echo ""
+fi
+
+echo $USER_ID
