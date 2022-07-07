@@ -34,7 +34,7 @@ import (
 	"k8s.io/client-go/util/retry"
 	"k8s.io/client-go/util/workqueue"
 	"k8s.io/klog"
-    "./config"
+   
 	
 	"github.com/oracle/oci-cloud-controller-manager/pkg/oci/client"
 	"github.com/oracle/oci-go-sdk/v49/core"
@@ -121,9 +121,7 @@ func (nic *NodeInfoController) Run(stopCh <-chan struct{}) {
 	
 	wait.Until(nic.runWorker, time.Second, stopCh)
 }
-func (nic *NodeInfoController) createNPN {
-	if(nic.nodeInformer.Informer())
-}
+
 //A function to run the worker which will process items in the queue
 func (nic *NodeInfoController) runWorker() {
 	for nic.processNextItem() {
