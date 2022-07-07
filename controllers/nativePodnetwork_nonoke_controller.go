@@ -117,7 +117,7 @@ func Add(mgr manager.Manager) error () {
 	}
 
 
-    err := r.Get(context.TODO(), request.NamespacedName, instance)
+    err := r.Get(context.TODO(), request.NamespacedName, npn)
   if err != nil {
     if errors.IsNotFound(err) {
       // Object not found, return.  Created objects are automatically garbage collected.
