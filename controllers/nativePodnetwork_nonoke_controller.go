@@ -36,7 +36,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/controller"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 	"sigs.k8s.io/controller-runtime/pkg/log"
-	"./pkg/cloudprovider/providers/oci/config"
+	"github.com/oracle/oci-cloud-controller-manger/pkg/cloudprovider/providers/oci/config"
 	npnv1beta1 "github.com/oracle/oci-cloud-controller-manager/api/v1beta1"
 	"github.com/oracle/oci-cloud-controller-manager/pkg/metrics"
 	ociclient "github.com/oracle/oci-cloud-controller-manager/pkg/oci/client"
