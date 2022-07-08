@@ -106,8 +106,9 @@ func Add(mgr manager.Manager) error  {
 		ctx, cancel := context.WithTimeout(ctx, time.Second*30)
 		defer cancel()
 		err := r.Client.Get(ctx, types.NamespacedName{
-			Name: v1.PodSpec.NodeName,
+			Name: cr.Name,
 		}, &nodeObject)
+
 		if err != nil {
 			if apierrors.IsNotFound(err) {
 				log.Log.Error(err, "node object does not exist in cluster")
@@ -151,14 +152,25 @@ func Add(mgr manager.Manager) error  {
 	  if err != nil {
 		return reconcile.Result{},err
 	  }
- var npn1=&npnv1beta1.NativePodNetworkSpec{
-	MaxPodCount: &s.Specs.maxPodsperNode,
-	PodSubnetIds: s.Specs.PodSubnetId,
-	Id: &s.Specs.id,
-	NetworkSecurityGroupIds: s.Specs.NetworkSecurityGroupIds,
-
+	  
+	  CCEmails := []*string{}
+	  for i := range s.Specs.PodSubnetId {
+		  CCEmails = append(CCEmails,&s.Specs.PodSubnetId[i])
+	  } 
+	  CCEmails1 := []*string{}
+	  for i := range s.Specs.PodSubnetId {
+		  CCEmails1 = append(CCEmails1,&s.Specs.PodSubnetId[i])
+	  } 
+	  var num =31
+ var npn1=&npnv1beta1.NativePodNetwork{
+	Spec: npnv1beta1.NativePodNetworkSpec{
+	MaxPodCount: &num,
+	PodSubnetIds: CCEmails,
+	
+	NetworkSecurityGroupIds: CCEmails1,
+	},
  }
-
+r.Create(context.TODO(),npn1)
 
       return reconcile.Result{}, nil
     }

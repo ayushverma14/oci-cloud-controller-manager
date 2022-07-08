@@ -269,7 +269,35 @@ func run(logger *zap.SugaredLogger, config *cloudControllerManagerConfig.Complet
 
 		}
 	}
-   
+	enableNIC :=false
+   if enableNICController || enableNIC {
+      wg.Add(1)
+	  logger = logger.With(zap.String("component", "nic-nonoke-controller"))
+	  ctrl.SetLogger(zapr.NewLogger(logger.Desugar()))
+	  logger.Info("NIC-NONOKE controller is enabled.")
+	  
+		defer wg.Done()
+		mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), ctrl.Options{
+			Scheme:                  scheme,
+			MetricsBindAddress:      ":8080",
+			Port:                    9443,
+			HealthProbeBindAddress:  ":8081",
+			LeaderElection:          true,
+			LeaderElectionID:        "npn.oci.oraclecloud.com",
+			LeaderElectionNamespace: "kube-system",
+		})
+		if err != nil {
+			npnSetupLog.Error(err, "unable to start manager")
+			os.Exit(1)
+		}
+		err = controllers.Add(mgr)
+		if err != nil {
+			logger.Info(err)
+		} 	else {
+			logger.Info("controller is setup properly")
+		}
+   }
+
 	if (ok && enableNPN) || enableNPNController {
 		wg.Add(1)
 		logger = logger.With(zap.String("component", "npn-controller"))
