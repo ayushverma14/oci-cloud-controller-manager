@@ -33,17 +33,10 @@ func TestValidateNPN(t *testing.T) {
 			name :"valid",
 			in: &NativepodNetwork{
 				APIVersion: "oraclecloud",
-				metadata: Metadata{
-					name:"oracle",
-				},
 				Kind: "npn-sample",
-				Specs: spec{
-					maxPodsperNode: 12,
-					PodSubnetId: "ocid.subnet.aaaaaaaaaaa",
-					id: "ocid1.aaaaaaaaaaaaaa",
-					
-				},
-	
+				metadata: Metadata{name: "oracle"},
+				Specs: spec{maxPodsperNode: 12, PodSubnetId: ["ocid.subnet.aaaaaaaaaaa"]_, id: "ocid1.aaaaaaaaaaaaaa"},
+				metadataSvc: nil,
 			},
 	
 			errs: field.ErrorList{
@@ -115,7 +108,7 @@ func TestValidateNPN(t *testing.T) {
 					Kind: "npn-sample",
 					Specs: spec{
 						maxPodsperNode: 125,
-						PodSubnetId: "ocid.subnet.aaaaaaaaaaa",
+						PodSubnetId: ["ocid.subnet.aaaaaaaaaaa"],
 						id: "ocid1.aaaaaaaaaaaaaa",
 						
 					},

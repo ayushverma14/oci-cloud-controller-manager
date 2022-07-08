@@ -113,7 +113,7 @@ func validateNPN(c *NativepodNetwork) field.ErrorList {
 		allErrs =append(allErrs,field.Required(field.NewPath("maxPodsperNode"),"The PodCount must be between 1 and 110"));
 
 	}
-	if c.Specs.PodSubnetId == "" {
+	if len(c.Specs.PodSubnetId) == 0 {
 		allErrs = append(allErrs,field.Required(field.NewPath("PodSubnetId"),"pod Subnet id must be given"))
 
 	}

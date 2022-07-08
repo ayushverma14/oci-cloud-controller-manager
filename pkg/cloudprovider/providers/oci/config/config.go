@@ -164,7 +164,7 @@ type spec struct {
 
 	maxPodsperNode int `yaml:"maxPodCount"`
     id string  `yaml:"id"`
-	PodSubnetId string `yaml:"podSubnetIds"`
+	PodSubnetId []string `yaml:"podSubnetIds"`
 	NetworkSecurityGroupIds []string `yaml:"networkSecurityGroupIds"`
     
 
@@ -192,7 +192,7 @@ func (c *NativepodNetwork) Complete() {
 	zap.S().Warnf("Invalid podCount,Initialising tit to DEFAULT:31")
 	c.Specs.maxPodsperNode=31
   }
-  if c.Specs.PodSubnetId == ""{
+  if len(c.Specs.PodSubnetId) == 0 {
 	zap.S().Warnf("No subnet Id provided : Unable to create NPN CR")
 	return
   }

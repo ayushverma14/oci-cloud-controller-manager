@@ -15,9 +15,10 @@
 package config
 
 import (
+	"fmt"
 	"strings"
 	"testing"
-    "fmt"
+
 	"github.com/oracle/oci-cloud-controller-manager/pkg/oci/instance/metadata"
 )
 
@@ -27,7 +28,8 @@ func TestReadConfigShouldFailWhenNoConfigProvided(t *testing.T) {
 		t.Fatalf("should fail with when given no config")
 	}
 }
-const spec1= `
+
+const spec1 = `
 apiVersion: ocicloud
 kind: npn
 metadata:
@@ -113,17 +115,18 @@ loadBalancer:
   subnet1: ocid1.subnet.oc1.phx.aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
   subnet2: ocid1.subnet.oc1.phx.aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
 `
-func TestSpecswhenMaxpodCountIsnotWithInLimits(t  *testing.T) {
-	s,err := Readspec(strings.NewReader(spec1))
+
+func TestSpecswhenMaxpodCountIsnotWithInLimits(t *testing.T) {
+	s, err := Readspec(strings.NewReader(spec1))
 	if err != nil {
-		t.Fatalf("error: '%+v' ",err);
+		t.Fatalf("error: '%+v' ", err)
 	}
-	if s.Specs.PodSubnetId == "" {
-		t.Fatalf("No Subnet id provided %d %s",s.Specs.maxPodsperNode,s.Specs.id)
+	if len(s.Specs.PodSubnetId) == 0 {
+		t.Fatalf("No Subnet id provided %d %s", s.Specs.maxPodsperNode, s.Specs.id)
 	}
-	fmt.Printf("%v",s)
+	fmt.Printf("%v", s)
 	//t.Fatalf("No Subnet id provided %d %s %s %s",s.maxPodsperNode,s.id,s.PodSubnetId,s.NetworkSecurityGroupIds[0])
-    
+
 }
 func TestReadConfigShouldSucceedWhenProvidedValidConfig(t *testing.T) {
 	_, err := ReadConfig(strings.NewReader(validConfig))
