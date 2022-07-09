@@ -162,7 +162,7 @@ manager and oci volume provisioner. It embeds the cloud specific control loops s
 	npnFlagSet.BoolVar(&enableNPNController, "enable-npn-controller", false, "Whether to enable Native Pod Network controller")
 
 	nicFlagSet := namedFlagSets.FlagSet("NIC Controller")
-	nicFlagSet.BoolVar(&enableNICController,"enable-nic-controller",true,"Whether to enable Node Info Controller")
+	nicFlagSet.BoolVar(&enableNICController,"enable-nic-controller",false,"Whether to enable Node Info Controller")
 	
 	if flag.CommandLine.Lookup("cloud-provider-gce-lb-src-cidrs") != nil {
 		// hoist this flag from the global flagset to preserve the commandline until

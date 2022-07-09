@@ -17,51 +17,52 @@ package config
 import (
 	"reflect"
 	"testing"
-	"fmt"
-	"github.com/google/go-cmp/cmp"
+
 	"github.com/oracle/oci-cloud-controller-manager/pkg/oci/instance/metadata"
 
 	"k8s.io/apimachinery/pkg/util/validation/field"
 )
+
 func TestValidateNPN(t *testing.T) {
+
 	testCases := []struct {
-		name string 
-		in *NativepodNetwork
+		name string
+		in   *NativepodNetwork
 		errs field.ErrorList
 	}{
 		{
-			name :"valid",
+			name: "valid",
 			in: &NativepodNetwork{
 				APIVersion: "oraclecloud",
-				Kind: "npn-sample",
-				metadata: Metadata{name: "oracle"},
-				Specs: spec{maxPodsperNode: 12, PodSubnetId: ["ocid.subnet.aaaaaaaaaaa"]_, id: "ocid1.aaaaaaaaaaaaaa"},
+				Kind:       "npn-sample",
+				metadata:   Metadata{name: "oracle"},
+				Specs: spec{
+					maxPodsperNode:          12,
+					id:                      "ocid1.aaaaaaaaaaaaaa",
+					PodSubnetId:             []string{"ocid1.aaaaaaaaaaaaaaaaaaaaaa"},
+					NetworkSecurityGroupIds: []string{},
+				},
 				metadataSvc: nil,
 			},
-	
-			errs: field.ErrorList{
-				
-				},
-			},
-	
-		
+
+			errs: field.ErrorList{},
+		},
+
 		{
-			name :"Invalid_CR_Without_SubnetId",
+			name: "Invalid_CR_Without_SubnetId",
 			in: &NativepodNetwork{
 				APIVersion: "oraclecloud",
 				metadata: Metadata{
-					name:"oracle",
+					name: "oracle",
 				},
 				Kind: "npn-sample",
 				Specs: spec{
 					maxPodsperNode: 12,
-					
+
 					id: "ocid1.aaaaaaaaaaaaaa",
-					
 				},
-	
 			},
-	
+
 			errs: field.ErrorList{
 				&field.Error{
 					Type:     field.ErrorTypeRequired,
@@ -70,25 +71,39 @@ func TestValidateNPN(t *testing.T) {
 					Detail:   "pod Subnet id must be given",
 				},
 			},
-	
 		},
 		{
-			name :"ValidCR_Without_PodCount",
+			name: "ValidCR_Without_PodCount",
 			in: &NativepodNetwork{
 				APIVersion: "oraclecloud",
 				metadata: Metadata{
-					name:"oracle",
+					name: "oracle",
 				},
 				Kind: "npn-sample",
 				Specs: spec{
-					
-					PodSubnetId: "ocid.subnet.aaaaaaaaaaa",
-					id: "ocid1.aaaaaaaaaaaaaa",
-					
+
+					PodSubnetId: []string{"ocid1.aaaaaaaaaaaaaaaaaaaaaa"},
+					id:          "ocid1.aaaaaaaaaaaaaa",
 				},
-	
 			},
-	
+
+			errs: field.ErrorList{},
+		},
+		{
+			name: "InvalidCR_With_InvalidPodCount",
+			in: &NativepodNetwork{
+				APIVersion: "oraclecloud",
+				metadata: Metadata{
+					name: "oracle",
+				},
+				Kind: "npn-sample",
+				Specs: spec{
+					maxPodsperNode: 125,
+					PodSubnetId:    []string{"ocid1.aaaaaaaaaaaaaaaaaaaaaa"},
+					id:             "ocid1.aaaaaaaaaaaaaa",
+				},
+			},
+
 			errs: field.ErrorList{
 				&field.Error{
 					Type:     field.ErrorTypeRequired,
@@ -98,35 +113,8 @@ func TestValidateNPN(t *testing.T) {
 				},
 			},
 		},
-			{
-				name :"InvalidCR_With_InvalidPodCount",
-				in: &NativepodNetwork{
-					APIVersion: "oraclecloud",
-					metadata: Metadata{
-						name:"oracle",
-					},
-					Kind: "npn-sample",
-					Specs: spec{
-						maxPodsperNode: 125,
-						PodSubnetId: ["ocid.subnet.aaaaaaaaaaa"],
-						id: "ocid1.aaaaaaaaaaaaaa",
-						
-					},
-		
-				},
-		
-				errs: field.ErrorList{
-					&field.Error{
-						Type:     field.ErrorTypeRequired,
-						Field:    "maxPodsperNode",
-						BadValue: "",
-						Detail:   "The PodCount must be between 1 and 110",
-					},
-					},
-				},
-		}
-	
-	
+	}
+
 	for _, tt := range testCases {
 		t.Run(tt.name, func(t *testing.T) {
 			tt.in.Complete()
@@ -135,15 +123,13 @@ func TestValidateNPN(t *testing.T) {
 			// var x bool
 			// x =cmp.Equal((tt.errs),(result))
 			// fmt.Print(x)
-			
-			 
-			
-			if !(len(result) == 0 && len(tt.errs) == 0) && cmp.Equal((result), (tt.errs)) {
+
+			if !(reflect.DeepEqual(tt.errs, result)) {
 				t.Errorf("ValidateNPN (%s) \n(%#v)\n=>        %q \nExpected: %q", tt.name, tt.in, result, tt.errs)
 			}
 		})
 	}
-	}
+}
 func TestValidateConfig(t *testing.T) {
 	testCases := []struct {
 		name string
@@ -463,7 +449,7 @@ func TestValidateConfig(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			tt.in.Complete()
 			result := ValidateConfig(tt.in)
-			fmt.Printf("'%+v' \n '%+v' \n '%+v'",result,tt.errs,reflect.DeepEqual(result,tt.errs));
+			//fmt.Printf("'%+v' \n '%+v' \n '%+v'", result, tt.errs, reflect.DeepEqual(result, tt.errs))
 
 			if !reflect.DeepEqual(result, tt.errs) {
 				t.Errorf("ValidateConfig (%s) \n(%#v)\n=>        %q \nExpected: %q", tt.name, tt.in, result, tt.errs)
