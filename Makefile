@@ -12,41 +12,33 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# temp directory for which we pull repos to.
-export TMP_DEP_DIR		:= ${PWD}/temp_repos
-
-# ioke/screts repository settings (clone-secrets))
-SECRETS_REPO	:= ssh://git@bitbucket.oci.oraclecorp.com:7999/okei/secrets.git
-
-ifeq ($(TC_BUILD),0)
-export SECRETS_LOCAL	?= ${TMP_DEP_DIR}/secrets
-export SECRETS_DIR		:= ${SECRETS_LOCAL}/k8-infra/${REGION_SECRETS}
-export KUBECONFIG		:= ${SECRETS_DIR}/kubeconfig.TNL
-else
-export SECRETS_LOCAL	:= /secrets
-export SECRETS_DIR      := ${SECRETS_LOCAL}/k8-infra/${REGION_SECRETS}
-export KUBECONFIG		:= ${SECRETS_DIR}/kubeconfig.TNL
-endif
-
 PKG := github.com/oracle/oci-cloud-controller-manager
-REGISTRY ?= odo-docker-signed-local.artifactory.oci.oraclecorp.com
-IMAGE ?= $(REGISTRY)/oke-public-cloud-provider-oci
-COMPONENT ?= oci-cloud-controller-manager oci-volume-provisioner oci-flexvolume-driver cloud-provider-oci oci-csi-controller-driver oci-csi-node-driver
-OCI_CLI_VERSION ?= master
-KUBECTL_VERSION ?= 1.11.0
 
-GIT_COMMIT := $(shell GCOMMIT=`git rev-parse --short HEAD`; if [ -n "`git status . --porcelain`" ]; then echo "$$GCOMMIT-dirty"; else echo $$GCOMMIT; fi)
-DOCKER_REPO_ROOT?=/go/src/github.com/oracle/oci-cloud-controller-manager
-# Allow overriding for release versions else just equal the build (git hash)
-ifeq "$(BUILD_NUMBER)" ""
-    VERSION_SUFFIX   ?= $(GIT_COMMIT)
+ifeq "$(CI_IMAGE_REGISTRY)" ""
+    CI_IMAGE_REGISTRY   ?= iad.ocir.io/oracle
 else
-    VERSION_SUFFIX   ?= $(GIT_COMMIT)-$(BUILD_NUMBER)
+    CI_IMAGE_REGISTRY   ?= ${CI_IMAGE_REGISTRY}
 endif
 
-K8S_VERSION := $(shell cat VERSION)
-VERSION ?= oke-$(K8S_VERSION)-$(VERSION_SUFFIX)
-BUILD = $(VERSION)
+ifeq "$(OSS_REGISTRY)" ""
+    OSS_REGISTRY   ?= iad.ocir.io/oracle
+else
+    OSS_REGISTRY   ?= ${OSS_REGISTRY}
+endif
+IMAGE ?= $(OSS_REGISTRY)/cloud-provider-oci
+COMPONENT ?= oci-cloud-controller-manager oci-volume-provisioner oci-flexvolume-driver oci-csi-controller-driver oci-csi-node-driver
+
+ALL_ARCH = amd64 arm64
+
+ifeq "$(VERSION)" ""
+    BUILD := $(shell git describe --exact-match 2> /dev/null || git describe --match=$(git rev-parse --short=8 HEAD) --always --dirty --abbrev=8)
+    # Allow overriding for release versions else just equal the build (git hash)
+    VERSION ?= ${BUILD}
+else
+    VERSION   ?= ${VERSION}
+endif
+
+RELEASE = v1.23.0
 
 GOOS ?= linux
 ARCH ?= amd64
@@ -85,25 +77,20 @@ check: gofmt govet golint
 .PHONY: build-dirs
 build-dirs:
 	@mkdir -p dist/
-	@mkdir -p dist/arm/
 
 .PHONY: build
 build: build-dirs
 	@for component in $(COMPONENT); do \
-		GOOS=$(GOOS) GOARCH=$(ARCH) CGO_ENABLED=1 go build -mod vendor -o dist/$$component -ldflags "-X main.version=$(VERSION) -X main.build=$(BUILD)" ./cmd/$$component ; \
+		GOOS=$(GOOS) GOARCH=$(ARCH) CGO_ENABLED=0 go build -o dist/$$component -ldflags "-X main.version=$(VERSION) -X main.build=$(BUILD)" ./cmd/$$component ; \
     done
-
-.PHONY: build-arm
-build-arm: build-dirs
-	GOOS=$(GOOS) GOARCH=arm64 CGO_ENABLED=0 go build -mod vendor -o dist/arm/oci-csi-node-driver -ldflags "-X main.version=$(VERSION) -X main.build=$(BUILD)" ./cmd/oci-csi-node-driver ;
-	GOOS=$(GOOS) GOARCH=arm64 CGO_ENABLED=0 go build -mod vendor -o dist/arm/oci-flexvolume-driver -ldflags "-X main.version=$(VERSION) -X main.build=$(BUILD)" ./cmd/oci-flexvolume-driver ; \
 
 .PHONY: manifests
 manifests: build-dirs
-	@cp -a manifests/**/*.yaml dist
+	@mkdir -p ${RELEASE}
+	@cp -a manifests/**/*.yaml ${RELEASE}
 	@sed $(SED_INPLACE)                         \
-	  's#${IMAGE}:latest#${IMAGE}:${VERSION}#g' \
-	  dist/*.yaml
+	  's#${IMAGE}:${VERSION}#${IMAGE}:${RELEASE}#g' \
+	  ${RELEASE}/*.yaml
 
 .PHONY: vendor
 vendor:
@@ -157,34 +144,48 @@ run-volume-provisioner-dev:
 	    -v=4
 
 .PHONY: image
-BUILD_ARGS = --build-arg COMPONENT="$(COMPONENT)"
+BUILD_ARGS = --build-arg CI_IMAGE_REGISTRY="$(CI_IMAGE_REGISTRY)" --build-arg COMPONENT="$(COMPONENT)"
 image:
 	docker  build $(BUILD_ARGS) \
-		-t $(IMAGE):$(VERSION) .
-	docker build $(BUILD_ARGS) \
-		-t $(IMAGE)-arm:$(VERSION) -f Dockerfile_arm .
+		-t $(IMAGE)-amd64:$(VERSION) .
+	docker  build $(BUILD_ARGS) \
+		-t $(IMAGE)-arm64:$(VERSION) -f Dockerfile_arm_all .
 
 .PHONY: push
 push: image
+	docker login --username="${oss_docker_username}" --password="${oss_docker_password}" $(OSS_REGISTRY)
 	docker push $(IMAGE):$(VERSION)
-	docker push $(IMAGE)-arm:$(VERSION)
+
+.PHONY: build
+build-arm-all: build-dirs
+	@for component in $(COMPONENT); do \
+    	GOOS=$(GOOS) GOARCH=arm64 CGO_ENABLED=0 go build -o dist/arm/$$component -ldflags "-X main.version=$(VERSION) -X main.build=$(BUILD)" ./cmd/$$component ; \
+    done
+
+.PHONY: docker-push
+docker-push: ## Push the docker image
+	docker push $(IMAGE)-$(ARCH):$(VERSION)
+
+docker-push-%:
+	$(MAKE) ARCH=$* docker-push
+
+.PHONY: docker-push-all ## Push all the architecture docker images
+docker-push-all: $(addprefix docker-push-,$(ALL_ARCH))
+	$(MAKE) docker-push-manifest
+
+.PHONY: docker-push-manifest
+docker-push-manifest: ## Push the fat manifest docker image.
+	## Minimum docker version 18.06.0 is required for creating and pushing manifest images.
+	docker manifest create --amend $(IMAGE):$(VERSION) $(shell echo $(ALL_ARCH) | sed -e "s~[^ ]*~$(IMAGE)\-&:$(VERSION)~g")
+	@for arch in $(ALL_ARCH); do docker manifest annotate --arch $${arch} ${IMAGE}:${VERSION} ${IMAGE}-$${arch}:${VERSION}; done
+	docker manifest push --purge ${IMAGE}:${VERSION}
 
 .PHONY: version
 version:
 	@echo $(VERSION)
 
 .PHONY: build-local
-build-local: build-dirs
-	@docker run --rm \
-		   --privileged \
-			 -w $(DOCKER_REPO_ROOT) \
-			 -v $(PWD):$(DOCKER_REPO_ROOT) \
-			 -e COMPONENT="$(COMPONENT)" \
-			 -e GOPATH=/go/ \
-			odo-docker-signed-local.artifactory.oci.oraclecorp.com/odx-oke/oke/k8-manager-base:go1.17.7-1.0.10 /bin/bash -c \
-			'for component in ${COMPONENT}; do \
-				echo building $$component && GOOS=$(GOOS) GOARCH=$(ARCH) CGO_ENABLED=1 go build -mod vendor -o dist/$$component -ldflags "-X main.version=$(VERSION) -X main.build=$(BUILD)" ./cmd/$$component ; \
-			 done'
+build-local: build
 
 .PHONY: test-local
 test-local: build-dirs
@@ -201,38 +202,6 @@ test-local: build-dirs
 run-ccm-e2e-tests-local:
 	./hack/run_e2e_test.sh
 
-# make temporary depenancy base dir
-create-deps-dir:
-	@if [ ! -d $(TMP_DEP_DIR) ]; then \
-		mkdir $(TMP_DEP_DIR); \
-	fi
-
-# clone or update the secrets repository
-clone-secrets: create-deps-dir
-	@if [ ! -d ${SECRETS_LOCAL} ]; then \
-		git clone ${SECRETS_REPO} ${SECRETS_LOCAL}; \
-	else \
-		cd ${SECRETS_LOCAL}; \
-		git pull; \
-		cd ..; \
-	fi
-
-images/oke-ccm-e2e-tests-pop-image.tar.gz:
-	mkdir -p images/e2e-tests
-	rm -rf ${TMP_DEP_DIR}/secrets.tar.gz
-	tar zcf ${TMP_DEP_DIR}/secrets.tar.gz -C ${SECRETS_LOCAL} .
-	sops -i -e --oci-kms https://avnzdivwaadfa-crypto.kms.us-phoenix-1.oraclecloud.com/ocid1.key.oc1.phx.avnzdivwaadfa.abyhqljrlxrkhc2g3wokrgishtxzt7ztxilatsvmshwk6w2yr75pfgadenlq --oci-profile SOPS ${TMP_DEP_DIR}/secrets.tar.gz
-	docker build --rm --build-arg https_proxy="$$https_proxy" --build-arg OCI_CLI_VERSION="$(OCI_CLI_VERSION)" --build-arg KUBECTL_VERSION="$(KUBECTL_VERSION)" -t oke-ccm-e2e-tests-pop -f images/e2e-tests/Dockerfile .
-	rm -rf ${TMP_DEP_DIR}/secrets.tar.gz
-	docker save oke-ccm-e2e-tests-pop | gzip > images/oke-ccm-e2e-tests-pop-image.tar.gz
-
-out/oke-ccm-tests-pop-$(BUILD_NUMBER).tar.gz: run-command/validate/* images/oke-ccm-e2e-tests-pop-image.tar.gz
-	mkdir -p out
-	rm -f out/*
-	tar -czvf out/oke-ccm-e2e-tests-pop-$(BUILD_NUMBER).tar.gz images/oke-ccm-e2e-tests-pop-image.tar.gz run-command
-
-.PHONY: create-pop
-create-pop: clone-secrets out/oke-ccm-tests-pop-$(BUILD_NUMBER).tar.gz
 
 # NPN
 .PHONY: install-controller-runtime
