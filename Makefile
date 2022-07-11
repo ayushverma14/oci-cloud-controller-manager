@@ -41,7 +41,7 @@ endif
 RELEASE = v1.23.0
 
 GOOS ?= linux
-ARCH ?= amd64
+ARCH ?= arm64
 
 SRC_DIRS := cmd controllers pkg # directories which hold app source (not vendored)
 
