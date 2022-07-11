@@ -15,6 +15,7 @@
 package config
 
 import (
+	"fmt"
 	"strings"
 	"testing"
 
@@ -28,6 +29,17 @@ func TestReadConfigShouldFailWhenNoConfigProvided(t *testing.T) {
 	}
 }
 
+const spec1 = `
+apiVersion: ocicloud
+kind: npn
+metadata:
+ name: aman
+spec:
+  maxPodCount: 3
+  id: ocid1.instance.oc1.iad.anuwcljs2ahbgkyc7anhsitk7veikgxldc6ex7rsqo5hhjvslqxaa5nf62pa
+  podSubnetIds: ['ocid1.subnet.oc1.iad.aaaaaaaame2kmeb2x3443s3kdcq27he2akbj67eijc3iar4l2atwnp5ttslq']
+  networkSecurityGroupIds: [ocid1.networksecuritygroup.oc1.iad.aaaaaaaa2ezkh44ul7yy2jioznmiydya4vcoedqxhpvhjjkl7a6rx2m267gq]
+  `
 const validConfig = `
 auth:
   region: us-phoenix-1
@@ -60,6 +72,17 @@ tags:
     defined:
       namespace:
         key: value
+apiVersion: oci.oraclecloud.com/v1beta1
+kind: NativePodNetwork
+metadata:
+  name: ccm-csi-e2e-v22-md-0-66v2m
+spec:
+  maxPodCount: 2
+  id: ocid1.instance.oc1.phx.anyhqljsh4gjgpyc54l2ljufsmcpoukrg3ngmmdtbmckpzdmcwbtndpt3riq
+  podSubnetIds:
+  - ocid1.subnet.oc1.phx.aaaaaaaa3vzgn2mbaqsgablaffyjuhhctkb47jjchhixmhyselz4znqxpuqa
+  networkSecurityGroupIds:
+  - ocid1.networksecuritygroup.oc1.phx.aaaaaaaasfidgoybtjbhkltnsfps2kzmirgpni3wm2wnr3ys7wszrwskus5q		
 `
 
 const validConfigNoLoadbalancing = `
@@ -104,11 +127,24 @@ loadBalancer:
   subnet2: ocid1.subnet.oc1.phx.aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
 `
 
+func TestSpecswhenMaxpodCountIsnotWithInLimits(t *testing.T) {
+	s, err := Readspec(strings.NewReader(spec1))
+	if err != nil {
+		t.Fatalf("error: '%+v' ", err)
+	}
+	if len(s.Specs.PodSubnetId) == 0 {
+		t.Fatalf("No Subnet id provided %d %s", s.Specs.MaxPodsperNode, s.Specs.Id)
+	}
+	fmt.Printf("%v", s)
+	//t.Fatalf("No Subnet id provided %d %s %s %s",s.maxPodsperNode,s.id,s.PodSubnetId,s.NetworkSecurityGroupIds[0])
+
+}
 func TestReadConfigShouldSucceedWhenProvidedValidConfig(t *testing.T) {
-	_, err := ReadConfig(strings.NewReader(validConfig))
+	s, err := ReadConfig(strings.NewReader(validConfig))
 	if err != nil {
 		t.Fatalf("expected no error but got '%+v'", err)
 	}
+	fmt.Printf("%v", s)
 }
 
 func TestReadConfigShouldHaveNoDefaultRegionIfNoneSpecified(t *testing.T) {

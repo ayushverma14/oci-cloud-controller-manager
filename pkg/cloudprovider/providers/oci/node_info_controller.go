@@ -34,7 +34,8 @@ import (
 	"k8s.io/client-go/util/retry"
 	"k8s.io/client-go/util/workqueue"
 	"k8s.io/klog"
-
+   
+	
 	"github.com/oracle/oci-cloud-controller-manager/pkg/oci/client"
 	"github.com/oracle/oci-go-sdk/v50/core"
 )
@@ -115,8 +116,9 @@ func (nic *NodeInfoController) Run(stopCh <-chan struct{}) {
 		utilruntime.HandleError(fmt.Errorf("Timed out waiting for caches to sync"))
 		return
 	}
-
+	nic.logger.Info("NIC setup complete")
 	wait.Until(nic.runWorker, time.Second, stopCh)
+	nic.logger.Info("NIC setup complete")
 }
 
 //A function to run the worker which will process items in the queue

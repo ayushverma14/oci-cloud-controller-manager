@@ -19,6 +19,7 @@ rules:
   verbs:
   - '*'
 
+
 - apiGroups:
   - ""
   resources:
@@ -85,6 +86,43 @@ rules:
   - update
 
 - apiGroups:
+  - "coordination.k8s.io"
+  resources:
+  - leases
+  verbs:
+  - create
+
+- apiGroups:
+  - "coordination.k8s.io"
+  resources:
+  - leases
+  resourceNames:
+  - "npn.oci.oraclecloud.com"
+  verbs:
+  - get
+  - list
+  - watch
+  - update
+
+- apiGroups:
+  - "oci.oraclecloud.com"
+  resources:
+  - nativepodnetworks
+  verbs:
+  - get
+  - list
+  - watch
+  - update
+  - create
+
+- apiGroups:
+  - "oci.oraclecloud.com"
+  resources:
+  - nativepodnetworks/status
+  verbs:
+  - update
+
+- apiGroups:
   - ""
   resources:
   - configmaps
@@ -97,6 +135,7 @@ rules:
   - configmaps
   resourceNames:
   - "cloud-controller-manager"
+  - "npn.oci.oraclecloud.com"
   verbs:
   - get
   - update

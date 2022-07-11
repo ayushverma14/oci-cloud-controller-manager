@@ -100,3 +100,24 @@ func ValidateConfig(c *Config) field.ErrorList {
 	}
 	return allErrs
 }
+func validateNPN(c *NativepodNetwork) field.ErrorList {
+	allErrs := field.ErrorList{}
+	if c.Specs.MaxPodsperNode > 110 || c.Specs.MaxPodsperNode < 1 {
+		allErrs = append(allErrs, field.Required(field.NewPath("maxPodsperNode"), "The PodCount must be between 1 and 110"))
+
+	}
+	if len(c.Specs.PodSubnetId) == 0 {
+		allErrs = append(allErrs, field.Required(field.NewPath("PodSubnetId"), "pod Subnet id must be given"))
+
+	}
+	if c.APIVersion == "" {
+		allErrs = append(allErrs, field.Required(field.NewPath("apiversion"), "apiVersion must be provided"))
+
+	}
+	if c.metadata.name == "" {
+		allErrs = append(allErrs, field.Required(field.NewPath("metadata"), "name of the reource is welcome"))
+
+	}
+	return allErrs
+
+}

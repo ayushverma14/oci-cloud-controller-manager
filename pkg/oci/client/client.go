@@ -61,6 +61,7 @@ type computeClient interface {
 	GetInstance(ctx context.Context, request core.GetInstanceRequest) (response core.GetInstanceResponse, err error)
 	ListInstances(ctx context.Context, request core.ListInstancesRequest) (response core.ListInstancesResponse, err error)
 	ListVnicAttachments(ctx context.Context, request core.ListVnicAttachmentsRequest) (response core.ListVnicAttachmentsResponse, err error)
+	AttachVnic(ctx context.Context, request core.AttachVnicRequest) (response core.AttachVnicResponse, err error)
 
 	GetVolumeAttachment(ctx context.Context, request core.GetVolumeAttachmentRequest) (response core.GetVolumeAttachmentResponse, err error)
 	ListVolumeAttachments(ctx context.Context, request core.ListVolumeAttachmentsRequest) (response core.ListVolumeAttachmentsResponse, err error)
@@ -77,6 +78,8 @@ type virtualNetworkClient interface {
 	UpdateSecurityList(ctx context.Context, request core.UpdateSecurityListRequest) (response core.UpdateSecurityListResponse, err error)
 
 	GetPrivateIp(ctx context.Context, request core.GetPrivateIpRequest) (response core.GetPrivateIpResponse, err error)
+	ListPrivateIps(ctx context.Context, request core.ListPrivateIpsRequest) (response core.ListPrivateIpsResponse, err error)
+	CreatePrivateIp(ctx context.Context, request core.CreatePrivateIpRequest) (response core.CreatePrivateIpResponse, err error)
 	GetPublicIpByIpAddress(ctx context.Context, request core.GetPublicIpByIpAddressRequest) (response core.GetPublicIpByIpAddressResponse, err error)
 }
 
@@ -339,4 +342,15 @@ func configureCustomTransport(logger *zap.SugaredLogger, baseClient *common.Base
 
 	httpClient.Transport = transport
 	return nil
+}
+
+// TODO: Reemove this once we move to having global retry policy
+func getDefaultRequestMetadata(existingRequestMetadata common.RequestMetadata) common.RequestMetadata {
+	if existingRequestMetadata.RetryPolicy != nil {
+		return existingRequestMetadata
+	}
+	requestMetadata := common.RequestMetadata{
+		RetryPolicy: newRetryPolicy(),
+	}
+	return requestMetadata
 }

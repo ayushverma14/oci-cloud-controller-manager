@@ -1,0 +1,135 @@
+
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.6.0
+  creationTimestamp: null
+  name: nativepodnetworks.oci.oraclecloud.com
+spec:
+  group: oci.oraclecloud.com
+  names:
+    kind: NativePodNetwork
+    listKind: NativePodNetworkList
+    plural: nativepodnetworks
+    shortNames:
+    - npn
+    - npns
+    singular: nativepodnetwork
+  scope: Cluster
+  versions:
+  - additionalPrinterColumns:
+    - jsonPath: .status.state
+      name: State
+      type: string
+    - jsonPath: .status.reason
+      name: Reason
+      type: string
+    name: v1beta1
+    schema:
+      openAPIV3Schema:
+        description: NativePodNetwork contains information about the various vnics
+          and ips that are attached to this node
+        properties:
+          apiVersion:
+            description: 'APIVersion defines the versioned schema of this representation
+              of an object. Servers should convert recognized schemas to the latest
+              internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+            type: string
+          kind:
+            description: 'Kind is a string value representing the REST resource this
+              object represents. Servers may infer this from the endpoint the client
+              submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+            type: string
+          metadata:
+            type: object
+          spec:
+            properties:
+              id:
+                description: ID holds the instance ocid that this CR belongs to
+                maxLength: 128
+                minLength: 1
+                type: string
+              maxPodCount:
+                default: 31
+                description: MaxPodCount is the maximum number of pods that can be
+                  scheduled onto this node
+                format: int64
+                maximum: 110
+                minimum: 1
+                type: integer
+              networkSecurityGroupIds:
+                description: NetworkSecurityGroupIDs are the firewall rules associated
+                  with this node
+                items:
+                  type: string
+                maxItems: 5
+                minItems: 0
+                type: array
+              podSubnetIds:
+                description: PodSubnetIDs are the subnets that pods are allowed to
+                  be allocated on
+                items:
+                  type: string
+                maxItems: 5
+                minItems: 0
+                type: array
+            required:
+            - id
+            type: object
+          status:
+            properties:
+              reason:
+                description: Reason is a general statement about any actions or errors
+                  that are happening on the NPN custom resource
+                type: string
+              state:
+                description: State is a short code of what is happening to the NPN
+                  custom resource
+                enum:
+                - BACKOFF
+                - IN_PROGRESS
+                - SUCCESS
+                type: string
+              vnics:
+                description: VNICs contains general information about the vnics/ips
+                  that are attached
+                items:
+                  properties:
+                    addresses:
+                      items:
+                        type: string
+                      maxItems: 32
+                      minItems: 1
+                      type: array
+                    macAddress:
+                      minLength: 1
+                      type: string
+                    routerIp:
+                      maxLength: 128
+                      minLength: 1
+                      type: string
+                    subnetCidr:
+                      minLength: 1
+                      type: string
+                    vnicId:
+                      minLength: 1
+                      type: string
+                  type: object
+                type: array
+            type: object
+        required:
+        - metadata
+        - spec
+        type: object
+    served: true
+    storage: true
+    subresources:
+      status: {}
+status:
+  acceptedNames:
+    kind: ""
+    plural: ""
+  conditions: []
+  storedVersions: []

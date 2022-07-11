@@ -15,9 +15,10 @@
 package config
 
 import (
-	"github.com/oracle/oci-cloud-controller-manager/pkg/oci/instance/metadata"
 	"io"
 	"os"
+
+	"github.com/oracle/oci-cloud-controller-manager/pkg/oci/instance/metadata"
 
 	"github.com/oracle/oci-go-sdk/v50/common"
 	"github.com/oracle/oci-go-sdk/v50/common/auth"
@@ -29,6 +30,10 @@ import (
 
 // AuthConfig holds the configuration required for communicating with the OCI
 // API.
+var (
+	EnableNIC, EnableNICController, EnableNPN, EnableNPNController bool
+)
+
 type AuthConfig struct {
 	Region      string `yaml:"region"`
 	TenancyID   string `yaml:"tenancy"`
@@ -150,8 +155,44 @@ type Config struct {
 	// cluster resides.
 	VCNID string `yaml:"vcn"`
 
-	//Metadata service to help fill in certain fields
+	// Metadata service to help fill in certain fields
 	metadataSvc metadata.Interface
+
+	Specs Spec `yaml:"spec"`
+
+	// UseServicePrincipals when set to true, clients will use an instance principal to fetch the s2s token
+	// from identity.
+	UseServicePrincipals bool `yaml:"UseServicePrincipals"`
+}
+type Spec struct {
+	MaxPodsperNode          int      `yaml:"maxPodCount"`
+	Id                      string   `yaml:"id"`
+	PodSubnetId             []string `yaml:"podSubnetIds"`
+	NetworkSecurityGroupIds []string `yaml:"networkSecurityGroupIds"`
+}
+type Metadata struct {
+	name string `yaml:"name"`
+}
+type NativepodNetwork struct {
+	APIVersion string   `yaml:"apiVersion"`
+	Kind       string   `yaml:"kind"`
+	metadata   Metadata `yaml:"metadata"`
+	Specs      Spec     `yaml:"spec"`
+}
+
+// Complete the load balancer config applying defaults / overrides.
+func (c *Spec) Complete() {
+
+	if c.MaxPodsperNode == 0 {
+		zap.S().Warnf("Invalid podCount,Initialising tit to DEFAULT:31")
+		c.MaxPodsperNode = 31
+	}
+	if len(c.PodSubnetId) == 0 {
+		zap.S().Warnf("No subnet Id provided : Unable to create NPN CR")
+
+		return
+	}
+
 }
 
 // Complete the load balancer config applying defaults / overrides.
@@ -220,6 +261,7 @@ func (c *Config) Complete() {
 			c.RegionKey = meta.Region
 		}
 	}
+
 }
 
 // Validate validates the OCI cloud-provider config.
@@ -228,6 +270,23 @@ func (c *Config) Validate() error {
 }
 
 // ReadConfig consumes the config Reader and constructs a Config object.
+func Readspec(r io.Reader) (*NativepodNetwork, error) {
+	if r == nil {
+		return nil, errors.New("no spec config file given")
+	}
+
+	cfg := &NativepodNetwork{}
+	err := yaml.NewDecoder(r).Decode(&cfg)
+	if err != nil {
+		return nil, errors.Wrap(err, "unmarshalling specs config")
+	}
+
+	// cfg.metadataSvc = metadata.New()
+
+	// Ensure defaults are correctly set
+
+	return cfg, nil
+}
 func ReadConfig(r io.Reader) (*Config, error) {
 	if r == nil {
 		return nil, errors.New("no cloud-provider config file given")
@@ -290,4 +349,26 @@ func NewConfigurationProvider(cfg *Config) (common.ConfigurationProvider, error)
 	}
 
 	return conf, nil
+}
+
+func GetConfig(logger *zap.SugaredLogger, configPath string) *Config {
+	cfg, err := FromFile(configPath)
+	if err != nil {
+		logger.With(zap.Error(err)).With("config", configPath).Fatal("Failed to load configuration file from given path.")
+	}
+
+	err = cfg.Validate()
+	if err != nil {
+		logger.With(zap.Error(err)).With("config", configPath).Fatal("Failed to validate. Invalid configuration.")
+	}
+
+	if cfg.CompartmentID == "" {
+		metadata, err := metadata.New().Get()
+		if err != nil {
+			logger.With(zap.Error(err)).With("config", configPath).Fatalf("Neither CompartmentID is given. Nor able to retrieve compartment OCID from metadata.")
+		}
+		cfg.CompartmentID = metadata.CompartmentID
+	}
+
+	return cfg
 }
