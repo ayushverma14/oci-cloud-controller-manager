@@ -1,0 +1,11 @@
+apiVersion: oci.oraclecloud.com/v1beta1
+kind: NativePodNetwork
+metadata:
+  name: 10.0.10.205
+spec:
+  maxPodCount: 3
+  id: ocid1.instance.oc1.iad.anuwcljs2ahbgkyc7anhsitk7veikgxldc6ex7rsqo5hhjvslqxaa5nf62pa
+  podSubnetIds:
+  - ocid1.subnet.oc1.iad.aaaaaaaame2kmeb2x3443s3kdcq27he2akbj67eijc3iar4l2atwnp5ttslq
+  networkSecurityGroupIds:
+  - ocid1.networksecuritygroup.oc1.iad.aaaaaaaa2ezkh44ul7yy2jioznmiydya4vcoedqxhpvhjjkl7a6rx2m267gq

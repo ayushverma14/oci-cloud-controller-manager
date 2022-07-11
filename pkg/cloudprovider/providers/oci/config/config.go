@@ -150,10 +150,53 @@ type Config struct {
 	// cluster resides.
 	VCNID string `yaml:"vcn"`
 
-	//Metadata service to help fill in certain fields
+	// Metadata service to help fill in certain fields
+	metadataSvc metadata.Interface
+
+	// UseServicePrincipals when set to true, clients will use an instance principal to fetch the s2s token
+	// from identity.
+	UseServicePrincipals bool `yaml:"UseServicePrincipals"`
+}
+type spec struct {
+
+	maxPodsperNode int `yaml:"maxPodCount"`
+    id string  `yaml:"id"`
+	PodSubnetId []string `yaml:"podSubnetIds"`
+	NetworkSecurityGroupIds []string `yaml:"networkSecurityGroupIds"`
+    
+
+}
+type Metadata struct {
+	name string `yaml:"name"`
+}
+type NativepodNetwork struct {
+
+	APIVersion string `yaml:"apiVersion"`
+	Kind string `yaml:"kind"`
+	metadata Metadata `yaml:"metadata"`
+	Specs spec `yaml:"spec"`
 	metadataSvc metadata.Interface
 }
 
+// Complete the load balancer config applying defaults / overrides.
+func (c *NativepodNetwork) Complete() {
+
+  if c.metadata.name == "" {
+	zap.S().Warnf("no name provided to the created CR")
+	c.metadata.name= "npn-sample"
+  }
+  if c.Specs.maxPodsperNode == 0 {
+	zap.S().Warnf("Invalid podCount,Initialising tit to DEFAULT:31")
+	c.Specs.maxPodsperNode=31
+  }
+  if len(c.Specs.PodSubnetId) == 0 {
+	zap.S().Warnf("No subnet Id provided : Unable to create NPN CR")
+	return
+  }
+
+  
+
+}
 // Complete the load balancer config applying defaults / overrides.
 func (c *LoadBalancerConfig) Complete() {
 	if c.Disabled {

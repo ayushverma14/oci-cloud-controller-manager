@@ -40,7 +40,7 @@ import (
 	"github.com/oracle/oci-cloud-controller-manager/pkg/metrics"
 	ociclient "github.com/oracle/oci-cloud-controller-manager/pkg/oci/client"
 	"github.com/oracle/oci-cloud-controller-manager/pkg/util"
-	"github.com/oracle/oci-go-sdk/v49/core"
+	"github.com/oracle/oci-go-sdk/v50/core"
 )
 
 const (
@@ -542,10 +542,6 @@ func filterPrivateIp(privateIps []core.PrivateIp) []core.PrivateIp {
 	for _, ip := range privateIps {
 		// ignore primary IP
 		if *ip.IsPrimary {
-			continue
-		}
-		// ignore IPs which are terminating or terminated
-		if ip.LifecycleState == core.PrivateIpLifecycleStateTerminating || ip.LifecycleState == core.PrivateIpLifecycleStateTerminated {
 			continue
 		}
 		secondaryIps = append(secondaryIps, ip)
