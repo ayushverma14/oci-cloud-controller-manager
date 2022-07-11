@@ -19,36 +19,34 @@ package controllers
 import (
 	"context"
 	//"sync"
-	"strings"
 	"time"
+    "strings"
 
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/wait"
-
 	//"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
-
 	//"k8s.io/client-go/util/workqueue"
 	//ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
 	"sigs.k8s.io/controller-runtime/pkg/log"
-
+    
 	npnv1beta1 "github.com/oracle/oci-cloud-controller-manager/api/v1beta1"
 	//"github.com/oracle/oci-cloud-controller-manager/pkg/metrics"
-	//	ociclient "github.com/oracle/oci-cloud-controller-manager/pkg/oci/client"
-	//	"github.com/oracle/oci-cloud-controller-manager/pkg/util"
+//	ociclient "github.com/oracle/oci-cloud-controller-manager/pkg/oci/client"
+//	"github.com/oracle/oci-cloud-controller-manager/pkg/util"
 	"github.com/oracle/oci-cloud-controller-manager/pkg/cloudprovider/providers/oci/config"
-	//	"github.com/oracle/oci-go-sdk/v49/core"
-	"sigs.k8s.io/controller-runtime/pkg/handler"
-	"sigs.k8s.io/controller-runtime/pkg/manager"
+//	"github.com/oracle/oci-go-sdk/v49/core"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 	"sigs.k8s.io/controller-runtime/pkg/source"
+	"sigs.k8s.io/controller-runtime/pkg/manager"
+	"sigs.k8s.io/controller-runtime/pkg/handler"
 )
 
-const spec1 = `
+const spec1= `
 apiVersion: ocicloud
 kind: npn
 metadata:
@@ -56,53 +54,53 @@ metadata:
 spec:
   maxPodCount: 3
   id: ocid1.instance.oc1.iad.anuwcljs2ahbgkyc7anhsitk7veikgxldc6ex7rsqo5hhjvslqxaa5nf62pa
-  podSubnetIds: ['ocid1.subnet.oc1.iad.aaaaaaaame2kmeb2x3443s3kdcq27he2akbj67eijc3iar4l2atwnp5ttslq']
+  podSubnetIds: ["ocid1.subnet.oc1.iad.aaaaaaaame2kmeb2x3443s3kdcq27he2akbj67eijc3iar4l2atwnp5ttslq"]
   networkSecurityGroupIds: [ocid1.networksecuritygroup.oc1.iad.aaaaaaaa2ezkh44ul7yy2jioznmiydya4vcoedqxhpvhjjkl7a6rx2m267gq]
   `
 
 type NativePodNetworkNONOKEReconciler struct {
 	client.Client
-	Scheme *runtime.Scheme
+	Scheme           *runtime.Scheme
 	// MetricPusher     *metrics.MetricPusher
 	// OCIClient        ociclient.Interface
 	// TimeTakenTracker map[string]time.Time
-	// Config           *config.NativepodNetwork
+    // Config           *config.NativepodNetwork
 }
-
-func Add(mgr manager.Manager) error {
+func Add(mgr manager.Manager) error  {
 	// Create a new Controller
 	c, err := controller.New("NativePodNewtorkNONOKEReconciler-controller", mgr,
-		controller.Options{Reconciler: &NativePodNetworkNONOKEReconciler{
-			Client: mgr.GetClient(),
-			Scheme: mgr.GetScheme(),
-		}})
+	  controller.Options{Reconciler: &NativePodNetworkNONOKEReconciler{
+		Client: mgr.GetClient(),
+		Scheme: mgr.GetScheme(),
+		
+	}})
 	if err != nil {
-		return err
+	  return err
 	}
-
+  
 	// Watch for changes to npn types
 	err = c.Watch(
-		&source.Kind{Type: &npnv1beta1.NativePodNetwork{}},
+	  &source.Kind{Type:&npnv1beta1.NativePodNetwork{}},
 		&handler.EnqueueRequestForObject{})
 	if err != nil {
-		return err
+	  return err
 	}
-
-	// Watch for changes to nodes created by a ContainerSet and trigger a Reconcile for the owner
+  
+	  // Watch for changes to nodes created by a ContainerSet and trigger a Reconcile for the owner
 	err = c.Watch(
-		&source.Kind{Type: &v1.Node{}},
+	  &source.Kind{Type: &v1.Node{}},
 		&handler.EnqueueRequestForOwner{
-			IsController: true,
-			OwnerType:    &npnv1beta1.NativePodNetwork{},
+		  IsController: true,
+		  OwnerType:    &npnv1beta1.NativePodNetwork{},
 		})
 	if err != nil {
-		return err
+	  return err
 	}
-
+  
 	return nil
-}
-func (r NativePodNetworkNONOKEReconciler) getNodeObjectInCluster(ctx context.Context, cr types.NamespacedName) (*v1.Node, error) {
-
+  }
+  func (r NativePodNetworkNONOKEReconciler) getNodeObjectInCluster(ctx context.Context, cr types.NamespacedName) (*v1.Node, error) {
+	
 	nodeObject := v1.Node{}
 	nodePresentInCluster := func() (bool, error) {
 		ctx, cancel := context.WithTimeout(ctx, time.Second*30)
@@ -136,47 +134,48 @@ func (r NativePodNetworkNONOKEReconciler) getNodeObjectInCluster(ctx context.Con
 	return &nodeObject, err
 }
 
-func (r *NativePodNetworkNONOKEReconciler) Reconcile(ctx context.Context, request reconcile.Request) (reconcile.Result, error) {
+  func (r *NativePodNetworkNONOKEReconciler) Reconcile(ctx context.Context,request reconcile.Request) (reconcile.Result, error) {
 	var npn = &npnv1beta1.NativePodNetwork{}
 
-	_, err := r.getNodeObjectInCluster(context.TODO(), request.NamespacedName)
+	_ ,err := r.getNodeObjectInCluster(context.TODO(),request.NamespacedName)
 	if err != nil {
-		return reconcile.Result{}, err
+		return reconcile.Result{},err
 	}
 
-	err = r.Get(context.TODO(), request.NamespacedName, npn)
-	if err != nil {
-		if apierrors.IsNotFound(err) {
-			// Object not found, return.  Created objects are automatically garbage collected.
-			// For additional cleanup logic use finalizers.
-			s, err := config.Readspec(strings.NewReader(spec1))
-			if err != nil {
-				return reconcile.Result{}, err
-			}
 
-			CCEmails := []*string{}
-			for i := range s.Specs.PodSubnetId {
-				CCEmails = append(CCEmails, &s.Specs.PodSubnetId[i])
-			}
-			CCEmails1 := []*string{}
-			for i := range s.Specs.PodSubnetId {
-				CCEmails1 = append(CCEmails1, &s.Specs.PodSubnetId[i])
-			}
-			var num = 31
-			var npn1 = &npnv1beta1.NativePodNetwork{
-				Spec: npnv1beta1.NativePodNetworkSpec{
-					MaxPodCount:  &num,
-					PodSubnetIds: CCEmails,
+    err = r.Get(context.TODO(), request.NamespacedName, npn)
+  if err != nil {
+    if apierrors.IsNotFound(err) {
+      // Object not found, return.  Created objects are automatically garbage collected.
+      // For additional cleanup logic use finalizers.
+	  s,err := config.Readspec(strings.NewReader(spec1))
+	  if err != nil {
+		return reconcile.Result{},err
+	  }
+	  
+	  CCEmails := []*string{}
+	  for i := range s.Specs.PodSubnetId {
+		  CCEmails = append(CCEmails,&s.Specs.PodSubnetId[i])
+	  } 
+	  CCEmails1 := []*string{}
+	  for i := range s.Specs.PodSubnetId {
+		  CCEmails1 = append(CCEmails1,&s.Specs.PodSubnetId[i])
+	  } 
+	  var num =31
+ var npn1=&npnv1beta1.NativePodNetwork{
+	Spec: npnv1beta1.NativePodNetworkSpec{
+	MaxPodCount: &num,
+	PodSubnetIds: CCEmails,
+	
+	NetworkSecurityGroupIds: CCEmails1,
+	},
+ }
+r.Create(context.TODO(),npn1)
 
-					NetworkSecurityGroupIds: CCEmails1,
-				},
-			}
-			r.Create(context.TODO(), npn1)
-
-			return reconcile.Result{}, nil
-		}
-		// Error reading the object - requeue the request.
-		return reconcile.Result{}, err
-	}
+      return reconcile.Result{}, nil
+    }
+    // Error reading the object - requeue the request.
+    return reconcile.Result{}, err
+  }
 	return reconcile.Result{}, err
 }
