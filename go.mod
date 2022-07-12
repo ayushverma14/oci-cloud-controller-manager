@@ -32,7 +32,7 @@ replace (
 	k8s.io/mount-utils => k8s.io/mount-utils v0.23.4
 	k8s.io/pod-security-admission => k8s.io/pod-security-admission v0.23.4
 	k8s.io/sample-apiserver => k8s.io/sample-apiserver v0.23.4
-	github.com/oracle/oci-cloud-controller-manager/cmd/oci-csi-controller-driver/csi-controller =>  ./cmd/oci-csi-controller-driver/csi-controller 
+
 )
 
 require (
@@ -68,6 +68,8 @@ require (
 	sigs.k8s.io/sig-storage-lib-external-provisioner/v6 v6.3.0
 )
 
+require github.com/go-logr/zapr v1.2.0
+
 require (
 	github.com/Azure/go-ansiterm v0.0.0-20210617225240-d185dfc1b5a1 // indirect
 	github.com/NYTimes/gziphandler v1.1.1 // indirect
@@ -86,7 +88,6 @@ require (
 	github.com/evanphx/json-patch v4.12.0+incompatible // indirect
 	github.com/felixge/httpsnoop v1.0.1 // indirect
 	github.com/fsnotify/fsnotify v1.5.1 // indirect
-	github.com/go-kit/kit v0.10.0 // indirect
 	github.com/go-logr/logr v1.2.0 // indirect
 	github.com/go-openapi/jsonpointer v0.19.5 // indirect
 	github.com/go-openapi/jsonreference v0.19.5 // indirect

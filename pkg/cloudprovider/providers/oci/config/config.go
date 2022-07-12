@@ -15,9 +15,10 @@
 package config
 
 import (
-	"github.com/oracle/oci-cloud-controller-manager/pkg/oci/instance/metadata"
 	"io"
 	"os"
+
+	"github.com/oracle/oci-cloud-controller-manager/pkg/oci/instance/metadata"
 
 	"github.com/oracle/oci-go-sdk/v50/common"
 	"github.com/oracle/oci-go-sdk/v50/common/auth"
@@ -29,6 +30,10 @@ import (
 
 // AuthConfig holds the configuration required for communicating with the OCI
 // API.
+var (
+	EnableNIC, EnableNICController, EnableNPN, EnableNPNController bool
+)
+
 type AuthConfig struct {
 	Region      string `yaml:"region"`
 	TenancyID   string `yaml:"tenancy"`
@@ -158,45 +163,40 @@ type Config struct {
 	UseServicePrincipals bool `yaml:"UseServicePrincipals"`
 }
 type spec struct {
-
-	maxPodsperNode int `yaml:"maxPodCount"`
-    id string  `yaml:"id"`
-	PodSubnetId []string `yaml:"podSubnetIds"`
+	maxPodsperNode          int      `yaml:"maxPodCount"`
+	id                      string   `yaml:"id"`
+	PodSubnetId             []string `yaml:"podSubnetIds"`
 	NetworkSecurityGroupIds []string `yaml:"networkSecurityGroupIds"`
-    
-
 }
 type Metadata struct {
 	name string `yaml:"name"`
 }
 type NativepodNetwork struct {
-
-	APIVersion string `yaml:"apiVersion"`
-	Kind string `yaml:"kind"`
-	metadata Metadata `yaml:"metadata"`
-	Specs spec `yaml:"spec"`
+	APIVersion  string   `yaml:"apiVersion"`
+	Kind        string   `yaml:"kind"`
+	metadata    Metadata `yaml:"metadata"`
+	Specs       spec     `yaml:"spec"`
 	metadataSvc metadata.Interface
 }
 
 // Complete the load balancer config applying defaults / overrides.
 func (c *NativepodNetwork) Complete() {
 
-  if c.metadata.name == "" {
-	zap.S().Warnf("no name provided to the created CR")
-	c.metadata.name= "npn-sample"
-  }
-  if c.Specs.maxPodsperNode == 0 {
-	zap.S().Warnf("Invalid podCount,Initialising tit to DEFAULT:31")
-	c.Specs.maxPodsperNode=31
-  }
-  if len(c.Specs.PodSubnetId) == 0 {
-	zap.S().Warnf("No subnet Id provided : Unable to create NPN CR")
-	return
-  }
-
-  
+	if c.metadata.name == "" {
+		zap.S().Warnf("no name provided to the created CR")
+		c.metadata.name = "npn-sample"
+	}
+	if c.Specs.maxPodsperNode == 0 {
+		zap.S().Warnf("Invalid podCount,Initialising tit to DEFAULT:31")
+		c.Specs.maxPodsperNode = 31
+	}
+	if len(c.Specs.PodSubnetId) == 0 {
+		zap.S().Warnf("No subnet Id provided : Unable to create NPN CR")
+		return
+	}
 
 }
+
 // Complete the load balancer config applying defaults / overrides.
 func (c *LoadBalancerConfig) Complete() {
 	if c.Disabled {
@@ -271,6 +271,24 @@ func (c *Config) Validate() error {
 }
 
 // ReadConfig consumes the config Reader and constructs a Config object.
+func Readspec(r io.Reader) (*NativepodNetwork, error) {
+	if r == nil {
+		return nil, errors.New("no spec config file given")
+	}
+
+	cfg := &NativepodNetwork{}
+	err := yaml.NewDecoder(r).Decode(&cfg)
+	if err != nil {
+		return nil, errors.Wrap(err, "unmarshalling specs config")
+	}
+
+	// cfg.metadataSvc = metadata.New()
+
+	// Ensure defaults are correctly set
+	cfg.Complete()
+
+	return cfg, nil
+}
 func ReadConfig(r io.Reader) (*Config, error) {
 	if r == nil {
 		return nil, errors.New("no cloud-provider config file given")
