@@ -32,6 +32,7 @@ replace (
 	k8s.io/mount-utils => k8s.io/mount-utils v0.23.4
 	k8s.io/pod-security-admission => k8s.io/pod-security-admission v0.23.4
 	k8s.io/sample-apiserver => k8s.io/sample-apiserver v0.23.4
+	github.com/oracle/oci-cloud-controller-manager/cmd/oci-csi-controller-driver/csi-controller =>  ./cmd/oci-csi-controller-driver/csi-controller 
 )
 
 require (
