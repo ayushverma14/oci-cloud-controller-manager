@@ -118,6 +118,7 @@ func (nic *NodeInfoController) Run(stopCh <-chan struct{}) {
 	}
 
 	wait.Until(nic.runWorker, time.Second, stopCh)
+	nic.logger.Info("NIC setup complete")
 }
 
 //A function to run the worker which will process items in the queue

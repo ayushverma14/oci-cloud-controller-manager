@@ -190,6 +190,7 @@ func (cp *CloudProvider) Initialize(clientBuilder cloudprovider.ControllerClient
 
 	nodeInformer := factory.Core().V1().Nodes()
 	go nodeInformer.Informer().Run(wait.NeverStop)
+	cp.logger.Info("informers ran successfully")
 	serviceInformer := factory.Core().V1().Services()
 	go serviceInformer.Informer().Run(wait.NeverStop)
 	go nodeInfoController.Run(wait.NeverStop)
@@ -199,7 +200,7 @@ func (cp *CloudProvider) Initialize(clientBuilder cloudprovider.ControllerClient
 		utilruntime.HandleError(fmt.Errorf("Timed out waiting for informers to sync"))
 	}
 	cp.NodeLister = nodeInformer.Lister()
-
+	cp.logger.Info("cached properly")
 	cp.securityListManagerFactory = func(mode string) securityListManager {
 		if cp.config.LoadBalancer.Disabled {
 			return newSecurityListManagerNOOP()
@@ -212,7 +213,7 @@ func (cp *CloudProvider) Initialize(clientBuilder cloudprovider.ControllerClient
 	var logger *zap.SugaredLogger
 	var wg sync.WaitGroup
 	enableNIC := true
-
+cp.logger.Info("Reached the npn controller to start")
 	if providercfg.EnableNICController || enableNIC {
 		wg.Add(1)
 		logger = logger.With(zap.String("component", "npncr-controller"))
@@ -239,7 +240,7 @@ func (cp *CloudProvider) Initialize(clientBuilder cloudprovider.ControllerClient
 			logger.Info("controller is setup properly")
 		}
 	}
-
+cp.logger.Info("npncr controller setup properly")
 	if enableNIC || providercfg.EnableNICController {
 		wg.Add(1)
 		logger = logger.With(zap.String("component", "npn-controller"))
