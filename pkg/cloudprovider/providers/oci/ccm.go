@@ -132,25 +132,25 @@ func NewCloudProvider(config *providercfg.Config) (cloudprovider.Interface, erro
 		config.VCNID = *subnet.VcnId
 	}
 
-	metricPusher, err := metrics.NewMetricPusher(logger.Sugar())
-	if err != nil {
-		logger.Sugar().With("error", err).Error("Metrics collection could not be enabled")
-		// disable metrics
-		metricPusher = nil
-	}
+	//metricPusher, err := metrics.NewMetricPusher(logger.Sugar())
+	// if err != nil {
+	// 	//logger.Sugar().With("error", err).Error("Metrics collection could not be enabled")
+	// 	// disable metrics
+	// 	metricPusher = nil
+	// }
 
-	if metricPusher != nil {
-		logger.Info("Metrics collection has been enabled")
-	} else {
-		logger.Info("Metrics collection has not been enabled")
-	}
+	// if metricPusher != nil {
+	// 	logger.Info("Metrics collection has been enabled")
+	// } else {
+	// 	logger.Info("Metrics collection has not been enabled")
+	// }
 
 	return &CloudProvider{
 		client:        c,
 		config:        config,
 		logger:        logger.Sugar(),
 		instanceCache: cache.NewTTLStore(instanceCacheKeyFn, time.Duration(24)*time.Hour),
-		metricPusher:  metricPusher,
+		//metricPusher:  metricPusher,
 	}, nil
 }
 
