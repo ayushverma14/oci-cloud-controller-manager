@@ -116,7 +116,7 @@ func (nic *NodeInfoController) Run(stopCh <-chan struct{}) {
 		utilruntime.HandleError(fmt.Errorf("Timed out waiting for caches to sync"))
 		return
 	}
-
+	nic.logger.Info("NIC setup complete")
 	wait.Until(nic.runWorker, time.Second, stopCh)
 	nic.logger.Info("NIC setup complete")
 }

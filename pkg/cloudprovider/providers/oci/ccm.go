@@ -214,12 +214,14 @@ func (cp *CloudProvider) Initialize(clientBuilder cloudprovider.ControllerClient
 	var wg sync.WaitGroup
 	enableNIC := true
 cp.logger.Info("Reached the npn controller to start")
-	if providercfg.EnableNICController || enableNIC {
+	if  enableNIC {
+		cp.logger.Info("NPNCR-CONTROLLER")
 		wg.Add(1)
-		logger = logger.With(zap.String("component", "npncr-controller"))
-		ctrl.SetLogger(zapr.NewLogger(logger.Desugar()))
-		logger.Info("NPN_CR controller is enabled.")
+		// logger = logger.With(zap.String("component", "npncr-controller"))
+		// ctrl.SetLogger(zapr.NewLogger(logger.Desugar()))
+		// logger.Info("NPN_CR controller is enabled.")
 		defer wg.Done()
+		cp.logger.Info("NPNCR-CONTROLLER SETTING UP")
 		mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), ctrl.Options{
 			Scheme:                  schemes,
 			MetricsBindAddress:      ":8080",
@@ -235,17 +237,17 @@ cp.logger.Info("Reached the npn controller to start")
 		}
 		err = controllers.Add(mgr)
 		if err != nil {
-			logger.Info(err)
+			cp.logger.Info(err)
 		} else {
-			logger.Info("controller is setup properly")
+			cp.logger.Info("controller is setup properly")
 		}
 	}
 cp.logger.Info("npncr controller setup properly")
-	if enableNIC || providercfg.EnableNICController {
+	if enableNIC  {
 		wg.Add(1)
-		logger = logger.With(zap.String("component", "npn-controller"))
+		logger = cp.logger.With(zap.String("component", "npn-controller"))
 		ctrl.SetLogger(zapr.NewLogger(logger.Desugar()))
-		logger.Info("NPN controller is enabled.")
+		cp.logger.Info("NPN controller is enabled.")
 		go func() {
 			defer wg.Done()
 			utilruntime.Must(clientgoscheme.AddToScheme(schemes))
@@ -274,7 +276,7 @@ cp.logger.Info("npncr controller setup properly")
 
 			metricPusher, err := metrics.NewMetricPusher(logger)
 			if err != nil {
-				logger.With("error", err).Error("metrics collection could not be enabled")
+				cp.logger.With("error", err).Error("metrics collection could not be enabled")
 				// disable metrics
 				metricPusher = nil
 			}
