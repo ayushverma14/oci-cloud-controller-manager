@@ -262,9 +262,9 @@ cp.logger.Info("npncr controller setup properly")
 
 			mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), ctrl.Options{
 				Scheme:                  schemes,
-				MetricsBindAddress:      ":8080",
+				MetricsBindAddress:      ":3000",
 				Port:                    9443,
-				HealthProbeBindAddress:  ":8081",
+				HealthProbeBindAddress:  ":3001",
 				LeaderElection:          true,
 				LeaderElectionID:        "npn.oci.oraclecloud.com",
 				LeaderElectionNamespace: "kube-system",
