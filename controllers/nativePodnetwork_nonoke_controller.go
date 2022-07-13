@@ -21,7 +21,7 @@ import (
 	//"sync"
 	"strings"
 	"time"
-
+    "fmt"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/wait"
@@ -37,7 +37,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
 	"sigs.k8s.io/controller-runtime/pkg/log"
-
+   
 	//"github.com/oracle/oci-cloud-controller-manager/pkg/metrics"
 	//	ociclient "github.com/oracle/oci-cloud-controller-manager/pkg/oci/client"
 	//	"github.com/oracle/oci-cloud-controller-manager/pkg/util"
@@ -64,6 +64,7 @@ spec:
 type NativePodNetworkNONOKEReconciler struct {
 	client.Client
 	Scheme *runtime.Scheme
+
 	// MetricPusher     *metrics.MetricPusher
 	// OCIClient        ociclient.Interface
 	// TimeTakenTracker map[string]time.Time
@@ -72,10 +73,12 @@ type NativePodNetworkNONOKEReconciler struct {
 
 func Add(mgr manager.Manager) error {
 	// Create a new Controller
+	  
 	c, err := controller.New("NativePodNewtorkNONOKEReconciler-controller", mgr,
 		controller.Options{Reconciler: &NativePodNetworkNONOKEReconciler{
 			Client: mgr.GetClient(),
 			Scheme: mgr.GetScheme(),
+			
 		}})
 	if err != nil {
 		return err
@@ -88,7 +91,7 @@ func Add(mgr manager.Manager) error {
 	if err != nil {
 		return err
 	}
-
+fmt.Print("watching nodes");
 	// Watch for changes to nodes created by a ContainerSet and trigger a Reconcile for the owner
 	err = c.Watch(
 		&source.Kind{Type: &v1.Node{}},
@@ -99,7 +102,7 @@ func Add(mgr manager.Manager) error {
 	if err != nil {
 		return err
 	}
-
+	fmt.Print("watching npn");
 	return nil
 }
 func (r NativePodNetworkNONOKEReconciler) getNodeObjectInCluster(ctx context.Context, cr types.NamespacedName) (*v1.Node, error) {
@@ -150,6 +153,7 @@ func (r *NativePodNetworkNONOKEReconciler) Reconcile(ctx context.Context, reques
 		if apierrors.IsNotFound(err) {
 			// Object not found, return.  Created objects are automatically garbage collected.
 			// For additional cleanup logic use finalizers.
+			
 			s, err := providercfg.Readspec(strings.NewReader(spec1))
 			if err != nil {
 				return reconcile.Result{}, err
