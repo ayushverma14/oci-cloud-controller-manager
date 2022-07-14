@@ -19,10 +19,10 @@ package controllers
 import (
 	"context"
 	//"sync"
-	"fmt"
 
 	"time"
 
+	"go.uber.org/zap"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/wait"
@@ -83,13 +83,14 @@ type NativePodNetworkNONOKEReconciler struct {
 
 func Add(mgr manager.Manager) error {
 	// Create a new Controller
+	logger := zap.L()
 
 	c, err := controller.New("NativePodNewtorkNONOKEReconciler-controller", mgr,
 		controller.Options{Reconciler: &NativePodNetworkNONOKEReconciler{
 			Client: mgr.GetClient(),
-			Scheme: scheme,
+			Scheme: mgr.GetScheme(),
 		}})
-	fmt.Print("watching nodes")
+	logger.Info("watching npn")
 	if err != nil {
 		return err
 	}
@@ -101,8 +102,8 @@ func Add(mgr manager.Manager) error {
 	if err != nil {
 		return err
 	}
-	fmt.Print("watching nodes")
-	// Watch for changes to nodes created by a ContainerSet and trigger a Reconcile for the owner
+	logger.Info("watching nodes")
+	// Watch for changes to nodes  and trigger a Reconcile for the owner
 	err = c.Watch(
 		&source.Kind{Type: &v1.Node{}},
 		&handler.EnqueueRequestForOwner{
@@ -112,7 +113,7 @@ func Add(mgr manager.Manager) error {
 	if err != nil {
 		return err
 	}
-	fmt.Print("watching npn")
+
 	return nil
 }
 func (r NativePodNetworkNONOKEReconciler) getNodeObjectInCluster(ctx context.Context, cr types.NamespacedName) (*v1.Node, error) {
@@ -151,6 +152,7 @@ func (r NativePodNetworkNONOKEReconciler) getNodeObjectInCluster(ctx context.Con
 }
 
 func (r *NativePodNetworkNONOKEReconciler) Reconcile(ctx context.Context, request reconcile.Request) (reconcile.Result, error) {
+	log := log.FromContext(ctx)
 	var npn = &npnv1beta1.NativePodNetwork{}
 
 	_, err := r.getNodeObjectInCluster(context.TODO(), request.NamespacedName)
@@ -160,6 +162,7 @@ func (r *NativePodNetworkNONOKEReconciler) Reconcile(ctx context.Context, reques
 
 	err = r.Get(context.TODO(), request.NamespacedName, npn)
 	if err != nil {
+		log.Info("npn not present on node")
 		if apierrors.IsNotFound(err) {
 			// Object not found, return.  Created objects are automatically garbage collected.
 			// For additional cleanup logic use finalizers.
@@ -191,6 +194,10 @@ func (r *NativePodNetworkNONOKEReconciler) Reconcile(ctx context.Context, reques
 		}
 		// Error reading the object - requeue the request.
 		return reconcile.Result{}, err
+	}	else {
+		log.Info("npn  already present on node")
 	}
+	log.Info("npn present on node")
+	
 	return reconcile.Result{}, err
 }
