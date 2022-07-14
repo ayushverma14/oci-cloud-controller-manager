@@ -157,6 +157,7 @@ func (r *NativePodNetworkNONOKEReconciler) Reconcile(ctx context.Context, reques
 
 	_, err := r.getNodeObjectInCluster(context.TODO(), request.NamespacedName)
 	if err != nil {
+		log.Error("not able to fetch object")
 		return reconcile.Result{}, err
 	}
 
