@@ -108,7 +108,10 @@ func Add(mgr manager.Manager) error {
 	// Watch for changes to nodes  and trigger a Reconcile for the owner
 	err = c.Watch(
 		&source.Kind{Type: &v1.Node{}},
-		&handler.EnqueueRequestForObject{})
+		&handler.EnqueueRequestForOwner{
+			IsController: true,
+			OwnerType:    &npnv1beta1.NativePodNetwork{},
+		})
 
 	if err != nil {
 		log.Log.Error(err,"err")
@@ -155,7 +158,7 @@ func (r NativePodNetworkNONOKEReconciler) getNodeObjectInCluster(ctx context.Con
 func (r *NativePodNetworkNONOKEReconciler) Reconcile(ctx context.Context, request reconcile.Request) (reconcile.Result, error) {
 	log := log.FromContext(ctx)
 	var npn = &npnv1beta1.NativePodNetwork{}
-
+	log.Info("Reconciling........")
 	_, err := r.getNodeObjectInCluster(context.TODO(), request.NamespacedName)
 	if err != nil {
 		log.Error(err,"not able to fetch object")

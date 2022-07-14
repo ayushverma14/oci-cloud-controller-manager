@@ -46,7 +46,7 @@ import (
 	"k8s.io/client-go/tools/cache"
 	cloudprovider "k8s.io/cloud-provider"
 	ctrl "sigs.k8s.io/controller-runtime"
-	//"sigs.k8s.io/controller-runtime/pkg/healthz"
+	"sigs.k8s.io/controller-runtime/pkg/healthz"
 )
 
 const (
@@ -233,6 +233,7 @@ func (cp *CloudProvider) Initialize(clientBuilder cloudprovider.ControllerClient
 			LeaderElectionID:        "npn.oci.oraclecloud.com",
 			LeaderElectionNamespace: "kube-system",
 		})
+
 		if err != nil {
 			npnSetupLog.Error(err, "unable to start manager")
 			os.Exit(1)
@@ -243,6 +244,23 @@ func (cp *CloudProvider) Initialize(clientBuilder cloudprovider.ControllerClient
 		} else {
 			cp.logger.Info("controller is setup properly")
 		}
+		if err := mgr.AddHealthzCheck("healthz", healthz.Ping); err != nil {
+			npnSetupLog.Error(err, "unable to set up health check")
+			os.Exit(1)
+		}
+		if err := mgr.AddReadyzCheck("readyz", healthz.Ping); err != nil {
+			npnSetupLog.Error(err, "unable to set up ready check")
+			os.Exit(1)
+		}
+
+		npnSetupLog.Info("starting manager")
+		if err := mgr.Start(ctrl.SetupSignalHandler()); err != nil {
+			npnSetupLog.Error(err, "problem running manager")
+			// TODO: Handle the case of NPN controller not running more gracefully
+			os.Exit(1)
+		}
+		
+		cp.logger.Info("manager running")
 	}
 	cp.logger.Info("npncr controller setup properly")
 	// if enableNIC  {
@@ -294,21 +312,21 @@ func (cp *CloudProvider) Initialize(clientBuilder cloudprovider.ControllerClient
 	// 			os.Exit(1)
 	// 		}
 
-	// 		if err := mgr.AddHealthzCheck("healthz", healthz.Ping); err != nil {
-	// 			npnSetupLog.Error(err, "unable to set up health check")
-	// 			os.Exit(1)
-	// 		}
-	// 		if err := mgr.AddReadyzCheck("readyz", healthz.Ping); err != nil {
-	// 			npnSetupLog.Error(err, "unable to set up ready check")
-	// 			os.Exit(1)
-	// 		}
+			// if err := mgr.AddHealthzCheck("healthz", healthz.Ping); err != nil {
+			// 	npnSetupLog.Error(err, "unable to set up health check")
+			// 	os.Exit(1)
+			// }
+			// if err := mgr.AddReadyzCheck("readyz", healthz.Ping); err != nil {
+			// 	npnSetupLog.Error(err, "unable to set up ready check")
+			// 	os.Exit(1)
+			// }
 
-	// 		npnSetupLog.Info("starting manager")
-	// 		if err := mgr.Start(ctrl.SetupSignalHandler()); err != nil {
-	// 			npnSetupLog.Error(err, "problem running manager")
-	// 			// TODO: Handle the case of NPN controller not running more gracefully
-	// 			os.Exit(1)
-	// 		}
+			// npnSetupLog.Info("starting manager")
+			// if err := mgr.Start(ctrl.SetupSignalHandler()); err != nil {
+			// 	npnSetupLog.Error(err, "problem running manager")
+			// 	// TODO: Handle the case of NPN controller not running more gracefully
+			// 	os.Exit(1)
+			// }
 	// 	}()
 	// }
 	wg.Wait()
