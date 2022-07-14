@@ -19,9 +19,10 @@ package controllers
 import (
 	"context"
 	//"sync"
+	"fmt"
 	"strings"
 	"time"
-    "fmt"
+
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/wait"
@@ -34,10 +35,11 @@ import (
 	//ctrl "sigs.k8s.io/controller-runtime"
 	npnv1beta1 "github.com/oracle/oci-cloud-controller-manager/api/v1beta1"
 	providercfg "github.com/oracle/oci-cloud-controller-manager/pkg/cloudprovider/providers/oci/config"
+	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
 	"sigs.k8s.io/controller-runtime/pkg/log"
-   
+
 	//"github.com/oracle/oci-cloud-controller-manager/pkg/metrics"
 	//	ociclient "github.com/oracle/oci-cloud-controller-manager/pkg/oci/client"
 	//	"github.com/oracle/oci-cloud-controller-manager/pkg/util"
@@ -61,6 +63,14 @@ spec:
   networkSecurityGroupIds: [ocid1.networksecuritygroup.oc1.iad.aaaaaaaa2ezkh44ul7yy2jioznmiydya4vcoedqxhpvhjjkl7a6rx2m267gq]
   `
 
+var (
+	scheme *runtime.Scheme = runtime.NewScheme()
+)
+
+func init() {
+	utilruntime.Must(npnv1beta1.AddToScheme(scheme))
+}
+
 type NativePodNetworkNONOKEReconciler struct {
 	client.Client
 	Scheme *runtime.Scheme
@@ -73,12 +83,11 @@ type NativePodNetworkNONOKEReconciler struct {
 
 func Add(mgr manager.Manager) error {
 	// Create a new Controller
-	  
+
 	c, err := controller.New("NativePodNewtorkNONOKEReconciler-controller", mgr,
 		controller.Options{Reconciler: &NativePodNetworkNONOKEReconciler{
 			Client: mgr.GetClient(),
-			Scheme: mgr.GetScheme(),
-			
+			Scheme: scheme,
 		}})
 	if err != nil {
 		return err
@@ -91,7 +100,7 @@ func Add(mgr manager.Manager) error {
 	if err != nil {
 		return err
 	}
-fmt.Print("watching nodes");
+	fmt.Print("watching nodes")
 	// Watch for changes to nodes created by a ContainerSet and trigger a Reconcile for the owner
 	err = c.Watch(
 		&source.Kind{Type: &v1.Node{}},
@@ -102,7 +111,7 @@ fmt.Print("watching nodes");
 	if err != nil {
 		return err
 	}
-	fmt.Print("watching npn");
+	fmt.Print("watching npn")
 	return nil
 }
 func (r NativePodNetworkNONOKEReconciler) getNodeObjectInCluster(ctx context.Context, cr types.NamespacedName) (*v1.Node, error) {
@@ -153,7 +162,7 @@ func (r *NativePodNetworkNONOKEReconciler) Reconcile(ctx context.Context, reques
 		if apierrors.IsNotFound(err) {
 			// Object not found, return.  Created objects are automatically garbage collected.
 			// For additional cleanup logic use finalizers.
-			
+
 			s, err := providercfg.Readspec(strings.NewReader(spec1))
 			if err != nil {
 				return reconcile.Result{}, err
@@ -167,12 +176,12 @@ func (r *NativePodNetworkNONOKEReconciler) Reconcile(ctx context.Context, reques
 			for i := range s.Specs.PodSubnetId {
 				CCEmails1 = append(CCEmails1, &s.Specs.PodSubnetId[i])
 			}
-			var num = 31
+
 			var npn1 = &npnv1beta1.NativePodNetwork{
 				Spec: npnv1beta1.NativePodNetworkSpec{
-					MaxPodCount:  &num,
-					PodSubnetIds: CCEmails,
-
+					MaxPodCount:             &s.Specs.MaxPodsperNode,
+					PodSubnetIds:            CCEmails,
+					Id:                      &s.Specs.Id,
 					NetworkSecurityGroupIds: CCEmails1,
 				},
 			}

@@ -122,7 +122,7 @@ func TestSpecswhenMaxpodCountIsnotWithInLimits(t *testing.T) {
 		t.Fatalf("error: '%+v' ", err)
 	}
 	if len(s.Specs.PodSubnetId) == 0 {
-		t.Fatalf("No Subnet id provided %d %s", s.Specs.maxPodsperNode, s.Specs.id)
+		t.Fatalf("No Subnet id provided %d %s", s.Specs.MaxPodsperNode, s.Specs.Id)
 	}
 	fmt.Printf("%v", s)
 	//t.Fatalf("No Subnet id provided %d %s %s %s",s.maxPodsperNode,s.id,s.PodSubnetId,s.NetworkSecurityGroupIds[0])

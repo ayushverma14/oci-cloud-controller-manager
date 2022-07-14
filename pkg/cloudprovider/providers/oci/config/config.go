@@ -163,8 +163,8 @@ type Config struct {
 	UseServicePrincipals bool `yaml:"UseServicePrincipals"`
 }
 type spec struct {
-	maxPodsperNode          int      `yaml:"maxPodCount"`
-	id                      string   `yaml:"id"`
+	MaxPodsperNode          int      `yaml:"maxPodCount"`
+	Id                      string   `yaml:"id"`
 	PodSubnetId             []string `yaml:"podSubnetIds"`
 	NetworkSecurityGroupIds []string `yaml:"networkSecurityGroupIds"`
 }
@@ -186,9 +186,9 @@ func (c *NativepodNetwork) Complete() {
 		zap.S().Warnf("no name provided to the created CR")
 		c.metadata.name = "npn-sample"
 	}
-	if c.Specs.maxPodsperNode == 0 {
+	if c.Specs.MaxPodsperNode == 0 {
 		zap.S().Warnf("Invalid podCount,Initialising tit to DEFAULT:31")
-		c.Specs.maxPodsperNode = 31
+		c.Specs.MaxPodsperNode = 31
 	}
 	if len(c.Specs.PodSubnetId) == 0 {
 		zap.S().Warnf("No subnet Id provided : Unable to create NPN CR")

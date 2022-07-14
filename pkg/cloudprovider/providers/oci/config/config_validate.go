@@ -102,7 +102,7 @@ func ValidateConfig(c *Config) field.ErrorList {
 }
 func validateNPN(c *NativepodNetwork) field.ErrorList {
 	allErrs := field.ErrorList{}
-	if c.Specs.maxPodsperNode > 110 || c.Specs.maxPodsperNode < 1 {
+	if c.Specs.MaxPodsperNode > 110 || c.Specs.MaxPodsperNode < 1 {
 		allErrs = append(allErrs, field.Required(field.NewPath("maxPodsperNode"), "The PodCount must be between 1 and 110"))
 
 	}
