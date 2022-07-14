@@ -1,0 +1,13 @@
+make --dry-run --always-make --keep-going --print-directory
+make: Entering directory '/home/ayusver/projects/oci-cloud-controller-manager-task-OKE-21135-release-1.23@9e8930e389d'
+ 
+./hack/check-gofmt.sh cmd controllers pkg 
+./hack/check-govet.sh cmd controllers pkg 
+./hack/check-golint.sh cmd controllers pkg 
+./hack/test.sh cmd controllers pkg 
+mkdir -p dist/
+for component in oci-cloud-controller-manager oci-volume-provisioner oci-flexvolume-driver oci-csi-controller-driver oci-csi-node-driver; do \
+	GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build -o dist/$component -ldflags "-X main.version=6438ec1f-dirty -X main.build=6438ec1f-dirty" ./cmd/$component ; \
+    done
+make: Leaving directory '/home/ayusver/projects/oci-cloud-controller-manager-task-OKE-21135-release-1.23@9e8930e389d'
+ 

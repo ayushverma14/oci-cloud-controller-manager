@@ -1,0 +1,566 @@
+make all --print-data-base --no-builtin-variables --no-builtin-rules --question
+# GNU Make 4.2.1
+# Built for x86_64-pc-linux-gnu
+# Copyright (C) 1988-2016 Free Software Foundation, Inc.
+# License GPLv3+: GNU GPL version 3 or later <http://gnu.org/licenses/gpl.html>
+# This is free software: you are free to change and redistribute it.
+# There is NO WARRANTY, to the extent permitted by law.
+
+# Make data base, printed on Thu Jul 14 10:26:35 2022
+
+# Variables
+
+# automatic
+<D = $(patsubst %/,%,$(dir $<))
+# automatic
+?F = $(notdir $?)
+# environment
+WSLENV = 
+# default
+.SHELLFLAGS := -c
+# automatic
+?D = $(patsubst %/,%,$(dir $?))
+# makefile (from 'Makefile', line 56)
+SED_INPLACE = -i
+# automatic
+@D = $(patsubst %/,%,$(dir $@))
+# automatic
+@F = $(notdir $@)
+# makefile
+CURDIR := /home/ayusver/projects/oci-cloud-controller-manager-task-OKE-21135-release-1.23@9e8930e389d
+# makefile
+SHELL = /bin/sh
+# makefile (from 'Makefile', line 147)
+BUILD_ARGS = --build-arg CI_IMAGE_REGISTRY="$(CI_IMAGE_REGISTRY)" --build-arg COMPONENT="$(COMPONENT)"
+# environment
+VSCODE_NLS_CONFIG = {"locale":"en-us","availableLanguages":{},"_languagePackSupport":true}
+# environment
+_ = /usr/bin/code
+# environment
+ELECTRON_ENABLE_LOGGING = 1
+# makefile (from 'Makefile', line 1)
+MAKEFILE_LIST :=  Makefile
+# 'override' directive
+GNUMAKEFLAGS := 
+# environment
+XDG_DATA_DIRS = /usr/local/share:/usr/share:/var/lib/snapd/desktop
+# environment
+VSCODE_AMD_ENTRYPOINT = vs/workbench/api/node/extensionHostProcess
+# environment
+DBUS_SESSION_BUS_ADDRESS = disabled:
+# makefile (from 'Makefile', line 36)
+VERSION = ${BUILD}
+# environment
+LESSOPEN = | /usr/bin/lesspipe %s
+# environment
+VSCODE_CWD = /home/ayusver
+# environment
+GOPROXY = https://proxy.golang.org,direct
+# default
+MAKE_HOST := x86_64-pc-linux-gnu
+# makefile (from 'Makefile', line 41)
+RELEASE = v1.23.0
+# environment
+PATH = /home/ayusver/bin:/home/ayusver/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/usr/lib/wsl/lib:/mnt/c/windows/system32:/mnt/c/windows:/mnt/c/windows/System32/Wbem:/mnt/c/windows/System32/WindowsPowerShell/v1.0/:/mnt/c/windows/System32/OpenSSH/:/mnt/c/Program Files/Docker/Docker/resources/bin:/mnt/c/ProgramData/DockerDesktop/version-bin:/mnt/c/Program Files/Kubernetes/Minikube:/mnt/c/Program Files/Git/cmd:/mnt/c/Program Files/Go/bin:/mnt/c/Users/Ayush Verma/scoop/shims:/mnt/c/Users/Ayush Verma/bin:/mnt/c/Users/Ayush Verma/AppData/Local/Microsoft/WindowsApps:/mnt/c/Users/Ayush Verma/AppData/Local/Programs/Microsoft VS Code/bin:/mnt/c/Users/Ayush Verma/clusterctl:/mnt/c/Users/Ayush Verma/go/bin:/snap/bin:/usr/local/go/bin:/home/ayusver/bin/oci.exe
+# environment
+XDG_RUNTIME_DIR = /mnt/wslg/runtime-dir
+# environment
+GOPATH = /home/ayusver/go
+# environment
+ELECTRON_RUN_AS_NODE = 1
+# environment
+KUBECONFIG = /home/ayusver/.kube/ccm-csi-e2e-v22.kubeconfig
+# default
+.FEATURES := target-specific order-only second-expansion else-if shortest-stem undefine oneshell archives jobserver output-sync check-symlink load
+# environment
+LS_COLORS = rs=0:di=01;34:ln=01;36:mh=00:pi=40;33:so=01;35:do=01;35:bd=40;33;01:cd=40;33;01:or=40;31;01:mi=00:su=37;41:sg=30;43:ca=30;41:tw=30;42:ow=34;42:st=37;44:ex=01;32:*.tar=01;31:*.tgz=01;31:*.arc=01;31:*.arj=01;31:*.taz=01;31:*.lha=01;31:*.lz4=01;31:*.lzh=01;31:*.lzma=01;31:*.tlz=01;31:*.txz=01;31:*.tzo=01;31:*.t7z=01;31:*.zip=01;31:*.z=01;31:*.dz=01;31:*.gz=01;31:*.lrz=01;31:*.lz=01;31:*.lzo=01;31:*.xz=01;31:*.zst=01;31:*.tzst=01;31:*.bz2=01;31:*.bz=01;31:*.tbz=01;31:*.tbz2=01;31:*.tz=01;31:*.deb=01;31:*.rpm=01;31:*.jar=01;31:*.war=01;31:*.ear=01;31:*.sar=01;31:*.rar=01;31:*.alz=01;31:*.ace=01;31:*.zoo=01;31:*.cpio=01;31:*.7z=01;31:*.rz=01;31:*.cab=01;31:*.wim=01;31:*.swm=01;31:*.dwm=01;31:*.esd=01;31:*.jpg=01;35:*.jpeg=01;35:*.mjpg=01;35:*.mjpeg=01;35:*.gif=01;35:*.bmp=01;35:*.pbm=01;35:*.pgm=01;35:*.ppm=01;35:*.tga=01;35:*.xbm=01;35:*.xpm=01;35:*.tif=01;35:*.tiff=01;35:*.png=01;35:*.svg=01;35:*.svgz=01;35:*.mng=01;35:*.pcx=01;35:*.mov=01;35:*.mpg=01;35:*.mpeg=01;35:*.m2v=01;35:*.mkv=01;35:*.webm=01;35:*.ogm=01;35:*.mp4=01;35:*.m4v=01;35:*.mp4v=01;35:*.vob=01;35:*.qt=01;35:*.nuv=01;35:*.wmv=01;35:*.asf=01;35:*.rm=01;35:*.rmvb=01;35:*.flc=01;35:*.avi=01;35:*.fli=01;35:*.flv=01;35:*.gl=01;35:*.dl=01;35:*.xcf=01;35:*.xwd=01;35:*.yuv=01;35:*.cgm=01;35:*.emf=01;35:*.ogv=01;35:*.ogx=01;35:*.aac=00;36:*.au=00;36:*.flac=00;36:*.m4a=00;36:*.mid=00;36:*.midi=00;36:*.mka=00;36:*.mp3=00;36:*.mpc=00;36:*.ogg=00;36:*.ra=00;36:*.wav=00;36:*.oga=00;36:*.opus=00;36:*.spx=00;36:*.xspf=00;36:
+# automatic
+%F = $(notdir $%)
+# environment
+DISPLAY = :0
+# makefile (from 'Makefile', line 28)
+IMAGE = $(OSS_REGISTRY)/cloud-provider-oci
+# makefile (from 'Makefile', line 46)
+SRC_DIRS := cmd controllers pkg 
+# makefile (from 'Makefile', line 50)
+CLOUD_PROVIDER_CFG = $$(pwd)/cloud-provider.yaml
+# environment
+PWD = /home/ayusver/projects/oci-cloud-controller-manager-task-OKE-21135-release-1.23@9e8930e389d
+# default
+.LOADED := 
+# makefile (from 'Makefile', line 15)
+PKG := github.com/oracle/oci-cloud-controller-manager
+# environment
+WSL_INTEROP = /run/WSL/2698_interop
+# environment
+PULSE_SERVER = /mnt/wslg/PulseServer
+# environment
+ORIGINAL_XDG_CURRENT_DESKTOP = undefined
+# environment
+GOMODCACHE = /home/ayusver/go/pkg/mod
+# environment
+HOME = /home/ayusver
+# environment
+LESSCLOSE = /usr/bin/lesspipe %s %s
+# environment
+VSCODE_CLI = 1
+# environment
+VSCODE_CODE_CACHE_PATH = /home/ayusver/.config/Code/CachedData/92d25e35d9bf1a6b16f7d0758f25d48ace11e5b9
+# environment
+LOGNAME = ayusver
+# environment
+APPLICATION_INSIGHTS_NO_DIAGNOSTIC_CHANNEL = 1
+# environment
+ELECTRON_NO_ATTACH_CONSOLE = 1
+# environment
+VSCODE_HANDLES_UNCAUGHT_ERRORS = true
+# automatic
+^D = $(patsubst %/,%,$(dir $^))
+# environment
+MAKELEVEL := 0
+# default
+MAKE = $(MAKE_COMMAND)
+# default
+MAKECMDGOALS := all
+# environment
+SHLVL = 1
+# default
+MAKE_VERSION := 4.2.1
+# makefile (from 'Makefile', line 24)
+OSS_REGISTRY = iad.ocir.io/oracle
+# environment
+USER = ayusver
+# makefile
+.DEFAULT_GOAL := all
+# environment
+NAME = ayushver-Y1183871H
+# automatic
+%D = $(patsubst %/,%,$(dir $%))
+# default
+MAKE_COMMAND := make
+# default
+.VARIABLES := 
+# automatic
+*F = $(notdir $*)
+# makefile (from 'Makefile', line 43)
+GOOS = linux
+# environment
+VSCODE_IPC_HOOK = /mnt/wslg/runtime-dir/vscode-c2cf2c9c-1.69.0-main.sock
+# makefile (from 'Makefile', line 44)
+ARCH = amd64
+# makefile
+MAKEFLAGS = pqrR
+# environment
+MFLAGS = -pqrR
+# automatic
+*D = $(patsubst %/,%,$(dir $*))
+# automatic
++D = $(patsubst %/,%,$(dir $+))
+# environment
+GDK_BACKEND = x11
+# automatic
++F = $(notdir $+)
+# environment
+NO_AT_BRIDGE = 1
+# makefile (from 'Makefile', line 52)
+RETURN_CODE := 0
+# 'override' directive
+.SHELLSTATUS := 0
+# default
+MAKEFILES := 
+# makefile (from 'Makefile', line 29)
+COMPONENT = oci-cloud-controller-manager oci-volume-provisioner oci-flexvolume-driver oci-csi-controller-driver oci-csi-node-driver
+# makefile (from 'Makefile', line 34)
+BUILD := 6438ec1f-dirty
+# automatic
+<F = $(notdir $<)
+# makefile (from 'Makefile', line 18)
+CI_IMAGE_REGISTRY = iad.ocir.io/oracle
+# environment
+LC_ALL = C
+# environment
+HOSTTYPE = x86_64
+# automatic
+^F = $(notdir $^)
+# makefile (from 'Makefile', line 31)
+ALL_ARCH = amd64 arm64
+# default
+SUFFIXES := 
+# environment
+WAYLAND_DISPLAY = wayland-0
+# environment
+CHROME_DESKTOP = code-url-handler.desktop
+# default
+.INCLUDE_DIRS = /usr/include /usr/local/include /usr/include
+# default
+.RECIPEPREFIX := 
+# environment
+LANG = C
+# environment
+TERM = xterm-256color
+# environment
+VSCODE_PID = 2732
+# environment
+WSL_DISTRO_NAME = Ubuntu
+# variable set hash-table stats:
+# Load=96/1024=9%, Rehash=0, Collisions=12/146=8%
+
+# Pattern-specific Variable Values
+
+# No pattern-specific variable values.
+
+# Directories
+
+# . (device 2080, inode 202286): 32 files, no impossibilities.
+
+# 32 files, no impossibilities in 1 directories.
+
+# Implicit Rules
+
+docker-push-%:
+#  recipe to execute (from 'Makefile', line 170):
+	$(MAKE) ARCH=$* docker-push
+
+# 1 implicit rules, 0 (0.0%) terminal.
+
+# Files
+
+docker-push-all: docker-push-amd64 docker-push-arm64
+#  Phony target (prerequisite of .PHONY).
+#  Implicit rule search has not been done.
+#  File does not exist.
+#  File has not been updated.
+#  recipe to execute (from 'Makefile', line 174):
+	$(MAKE) docker-push-manifest
+
+run-ccm-e2e-tests-local:
+#  Phony target (prerequisite of .PHONY).
+#  Implicit rule search has not been done.
+#  File does not exist.
+#  File has not been updated.
+#  recipe to execute (from 'Makefile', line 203):
+	./hack/run_e2e_test.sh
+
+all: check test build
+#  Phony target (prerequisite of .PHONY).
+#  Command line target.
+#  Implicit rule search has not been done.
+#  File does not exist.
+#  File has been updated.
+#  Needs to be updated (-q is set).
+# variable set hash-table stats:
+# Load=0/32=0%, Rehash=0, Collisions=0/4=0%
+
+.PHONY: all gofmt golint govet check build-dirs build manifests vendor test coverage canary-run-once canary-monitor validate-canary clean run-ccm-dev run-volume-provisioner-dev image push build docker-push docker-push-all docker-push-manifest version build-local test-local run-ccm-e2e-tests-local install-controller-runtime npn-generate
+#  Implicit rule search has not been done.
+#  Modification time never checked.
+#  File has not been updated.
+
+install-controller-runtime:
+#  Phony target (prerequisite of .PHONY).
+#  Implicit rule search has not been done.
+#  File does not exist.
+#  File has not been updated.
+#  recipe to execute (from 'Makefile', line 209):
+	go install sigs.k8s.io/controller-tools/cmd/controller-gen@v0.7.0
+
+npn-generate:
+#  Phony target (prerequisite of .PHONY).
+#  Implicit rule search has not been done.
+#  File does not exist.
+#  File has not been updated.
+#  recipe to execute (from 'Makefile', line 213):
+	$(GOPATH)/bin/controller-gen object:headerFile="hack/boilerplate.go.txt" paths="./api/..."
+
+# Not a target:
+.SUFFIXES:
+#  Implicit rule search has not been done.
+ 
+#  Modification time never checked.
+#  File has not been updated.
+
+push: image
+#  Phony target (prerequisite of .PHONY).
+#  Implicit rule search has not been done.
+#  File does not exist.
+#  File has not been updated.
+#  recipe to execute (from 'Makefile', line 156):
+	docker login --username="${oss_docker_username}" --password="${oss_docker_password}" $(OSS_REGISTRY)
+	docker push $(IMAGE):$(VERSION)
+
+# Not a target:
+Makefile:
+#  Implicit rule search has been done.
+#  Last modified 2022-07-12 14:03:58.864524522
+#  File has been updated.
+#  Successfully updated.
+
+govet:
+#  Phony target (prerequisite of .PHONY).
+#  Implicit rule search has not been done.
+#  File does not exist.
+#  File has not been updated.
+#  recipe to execute (from 'Makefile', line 72):
+	@./hack/check-govet.sh $(SRC_DIRS)
+
+test:
+#  Phony target (prerequisite of .PHONY).
+#  Implicit rule search has not been done.
+#  File does not exist.
+#  File has not been updated.
+#  recipe to execute (from 'Makefile', line 101):
+	@./hack/test.sh $(SRC_DIRS)
+
+build: build-dirs
+#  Phony target (prerequisite of .PHONY).
+#  Implicit rule search has not been done.
+#  File does not exist.
+#  File has not been updated.
+#  recipe to execute (from 'Makefile', line 83):
+	@for component in $(COMPONENT); do \
+		GOOS=$(GOOS) GOARCH=$(ARCH) CGO_ENABLED=0 go build -o dist/$$component -ldflags "-X main.version=$(VERSION) -X main.build=$(BUILD)" ./cmd/$$component ; \
+    done
+
+build-dirs:
+#  Phony target (prerequisite of .PHONY).
+#  Implicit rule search has not been done.
+#  File does not exist.
+#  File has not been updated.
+#  recipe to execute (from 'Makefile', line 79):
+	@mkdir -p dist/
+
+test-local: build-dirs
+#  Phony target (prerequisite of .PHONY).
+#  Implicit rule search has not been done.
+#  File does not exist.
+#  File has not been updated.
+#  recipe to execute (from 'Makefile', line 192):
+	@docker run --rm \
+		   --privileged \
+			 -w $(DOCKER_REPO_ROOT) \
+			 -v $(PWD):$(DOCKER_REPO_ROOT) \
+			 -e COMPONENT="$(COMPONENT)" \
+			 -e GOPATH=/go/ \
+			odo-docker-signed-local.artifactory.oci.oraclecorp.com/odx-oke/oke/k8-manager-base:go1.17.7-1.0.10 \
+			make coverage image
+
+build-local: build
+#  Phony target (prerequisite of .PHONY).
+#  Implicit rule search has not been done.
+#  File does not exist.
+#  File has not been updated.
+
+validate-canary:
+#  Phony target (prerequisite of .PHONY).
+#  Implicit rule search has not been done.
+#  File does not exist.
+#  File has not been updated.
+#  recipe to execute (from 'Makefile', line 122):
+	@./hack/validate-canary.sh run
+
+docker-push-manifest:
+#  Phony target (prerequisite of .PHONY).
+#  Implicit rule search has not been done.
+#  File does not exist.
+#  File has not been updated.
+#  recipe to execute (from 'Makefile', line 178):
+	## Minimum docker version 18.06.0 is required for creating and pushing manifest images.
+	docker manifest create --amend $(IMAGE):$(VERSION) $(shell echo $(ALL_ARCH) | sed -e "s~[^ ]*~$(IMAGE)\-&:$(VERSION)~g")
+	@for arch in $(ALL_ARCH); do docker manifest annotate --arch $${arch} ${IMAGE}:${VERSION} ${IMAGE}-$${arch}:${VERSION}; done
+	docker manifest push --purge ${IMAGE}:${VERSION}
+
+manifests: build-dirs
+#  Phony target (prerequisite of .PHONY).
+#  Implicit rule search has not been done.
+#  File does not exist.
+#  File has not been updated.
+#  recipe to execute (from 'Makefile', line 89):
+	@mkdir -p ${RELEASE}
+	@cp -a manifests/**/*.yaml ${RELEASE}
+	@sed $(SED_INPLACE)                         \
+	  's#${IMAGE}:${VERSION}#${IMAGE}:${RELEASE}#g' \
+	  ${RELEASE}/*.yaml
+
+canary-run-once:
+#  Phony target (prerequisite of .PHONY).
+#  Implicit rule search has not been done.
+#  File does not exist.
+#  File has not been updated.
+#  recipe to execute (from 'Makefile', line 111):
+	@./hack/test-canary.sh run-once
+
+version:
+#  Phony target (prerequisite of .PHONY).
+#  Implicit rule search has not been done.
+#  File does not exist.
+#  File has not been updated.
+#  recipe to execute (from 'Makefile', line 185):
+	@echo $(VERSION)
+
+# Not a target:
+.DEFAULT:
+#  Implicit rule search has not been done.
+#  Modification time never checked.
+#  File has not been updated.
+
+image:
+#  Phony target (prerequisite of .PHONY).
+#  Implicit rule search has not been done.
+#  File does not exist.
+#  File has not been updated.
+#  recipe to execute (from 'Makefile', line 149):
+	docker  build $(BUILD_ARGS) \
+		-t $(IMAGE)-amd64:$(VERSION) .
+	docker  build $(BUILD_ARGS) \
+		-t $(IMAGE)-arm64:$(VERSION) -f Dockerfile_arm_all .
+
+clean:
+#  Phony target (prerequisite of .PHONY).
+#  Implicit rule search has not been done.
+#  File does not exist.
+#  File has not been updated.
+#  recipe to execute (from 'Makefile', line 126):
+	@rm -rf dist
+
+coverage: test
+#  Phony target (prerequisite of .PHONY).
+#  Implicit rule search has not been done.
+#  File does not exist.
+#  File has not been updated.
+#  recipe to execute (from 'Makefile', line 105):
+	GO111MODULE=off go tool cover -html=coverage.out -o coverage.html
+	GO111MODULE=off go tool cover -func=coverage.out > coverage.txt
+
+# Not a target:
+docker-push-amd64:
+#  Implicit rule search has not been done.
+#  Modification time never checked.
+#  File has not been updated.
+
+gofmt:
+#  Phony target (prerequisite of .PHONY).
+#  Implicit rule search has not been done.
+#  Implicit/static pattern stem: ''
+#  File does not exist.
+#  File has been updated.
+#  Needs to be updated (-q is set).
+# automatic
+# @ := gofmt
+# automatic
+# % := 
+# automatic
+# * := 
+# automatic
+# + := 
+# automatic
+# | := 
+# automatic
+# < := 
+# automatic
+# ^ := 
+# automatic
+# ? := 
+# variable set hash-table stats:
+# Load=8/32=25%, Rehash=0, Collisions=1/12=8%
+#  recipe to execute (from 'Makefile', line 64):
+	@./hack/check-gofmt.sh $(SRC_DIRS)
+
+golint:
+#  Phony target (prerequisite of .PHONY).
+#  Implicit rule search has not been done.
+#  File does not exist.
+#  File has not been updated.
+#  recipe to execute (from 'Makefile', line 68):
+	@./hack/check-golint.sh $(SRC_DIRS)
+
+check: gofmt govet golint
+#  Phony target (prerequisite of .PHONY).
+#  Implicit rule search has not been done.
+#  File does not exist.
+#  File has been updated.
+#  Needs to be updated (-q is set).
+# variable set hash-table stats:
+# Load=0/32=0%, Rehash=0, Collisions=0/4=0%
+
+build-arm-all: build-dirs
+#  Implicit rule search has not been done.
+#  Modification time never checked.
+#  File has not been updated.
+#  recipe to execute (from 'Makefile', line 161):
+	@for component in $(COMPONENT); do \
+    	GOOS=$(GOOS) GOARCH=arm64 CGO_ENABLED=0 go build -o dist/arm/$$component -ldflags "-X main.version=$(VERSION) -X main.build=$(BUILD)" ./cmd/$$component ; \
+    done
+
+docker-push:
+#  Phony target (prerequisite of .PHONY).
+#  Implicit rule search has not been done.
+#  File does not exist.
+#  File has not been updated.
+#  recipe to execute (from 'Makefile', line 167):
+	docker push $(IMAGE)-$(ARCH):$(VERSION)
+
+run-ccm-dev:
+#  Phony target (prerequisite of .PHONY).
+#  Implicit rule search has not been done.
+#  File does not exist.
+#  File has not been updated.
+#  recipe to execute (from 'Makefile', line 130):
+	@go run cmd/oci-cloud-controller-manager/main.go  \
+	  --kubeconfig=$(KUBECONFIG)                      \
+	  --cloud-config=$(CLOUD_PROVIDER_CFG)            \
+	  --cluster-cidr=10.244.0.0/16                    \
+	  --leader-elect-resource-lock=configmaps         \
+	  --cloud-provider=oci                            \
+	  -v=4
+
+vendor:
+#  Phony target (prerequisite of .PHONY).
+#  Implicit rule search has not been done.
+#  File does not exist.
+#  File has not been updated.
+#  recipe to execute (from 'Makefile', line 97):
+	@GO111MODULE=on go mod vendor -v
+
+canary-monitor:
+#  Phony target (prerequisite of .PHONY).
+#  Implicit rule search has not been done.
+#  File does not exist.
+#  File has not been updated.
+#  recipe to execute (from 'Makefile', line 116):
+	@./hack/test-canary.sh monitor
+
+run-volume-provisioner-dev:
+#  Phony target (prerequisite of .PHONY).
+#  Implicit rule search has not been done.
+#  File does not exist.
+#  File has not been updated.
+#  recipe to execute (from 'Makefile', line 140):
+	@NODE_NAME=$(shell hostname)                      \
+	CONFIG_YAML_FILENAME=cloud-provider.yaml          \
+	go run cmd/oci-volume-provisioner/main.go         \
+	    --kubeconfig=$(KUBECONFIG)                    \
+	    -v=4
+
+# Not a target:
+docker-push-arm64:
+#  Implicit rule search has not been done.
+#  Modification time never checked.
+#  File has not been updated.
+
+# files hash-table stats:
+# Load=35/1024=3%, Rehash=0, Collisions=0/146=0%
+# VPATH Search Paths
+
+# No 'vpath' search paths.
+
+# No general ('VPATH' variable) search path.
+
+# strcache buffers: 1 (0) / strings = 65 / storage = 731 B / avg = 11 B
+# current buf: size = 8162 B / used = 731 B / count = 65 / avg = 11 B
+
+# strcache performance: lookups = 203 / hit rate = 67%
+# hash-table stats:
+# Load=65/8192=1%, Rehash=0, Collisions=1/203=0%
+# Finished Make data base on Thu Jul 14 10:26:35 2022
+
+ 
