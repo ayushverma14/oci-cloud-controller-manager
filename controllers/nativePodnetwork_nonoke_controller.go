@@ -20,7 +20,7 @@ import (
 	"context"
 	//"sync"
 	"fmt"
-	"strings"
+
 	"time"
 
 	v1 "k8s.io/api/core/v1"
@@ -164,25 +164,24 @@ func (r *NativePodNetworkNONOKEReconciler) Reconcile(ctx context.Context, reques
 			// Object not found, return.  Created objects are automatically garbage collected.
 			// For additional cleanup logic use finalizers.
 
-			s, err := providercfg.Readspec(strings.NewReader(spec1))
 			if err != nil {
 				return reconcile.Result{}, err
 			}
-
+			var cfg providercfg.Spec
 			CCEmails := []*string{}
-			for i := range s.Specs.PodSubnetId {
-				CCEmails = append(CCEmails, &s.Specs.PodSubnetId[i])
+			for i := range cfg.PodSubnetId {
+				CCEmails = append(CCEmails, &cfg.PodSubnetId[i])
 			}
 			CCEmails1 := []*string{}
-			for i := range s.Specs.PodSubnetId {
-				CCEmails1 = append(CCEmails1, &s.Specs.PodSubnetId[i])
+			for i := range cfg.NetworkSecurityGroupIds {
+				CCEmails1 = append(CCEmails1, &cfg.NetworkSecurityGroupIds[i])
 			}
 
 			var npn1 = &npnv1beta1.NativePodNetwork{
 				Spec: npnv1beta1.NativePodNetworkSpec{
-					MaxPodCount:             &s.Specs.MaxPodsperNode,
+					MaxPodCount:             &cfg.MaxPodsperNode,
 					PodSubnetIds:            CCEmails,
-					Id:                      &s.Specs.Id,
+					Id:                      &cfg.Id,
 					NetworkSecurityGroupIds: CCEmails1,
 				},
 			}

@@ -162,7 +162,7 @@ type Config struct {
 	// from identity.
 	UseServicePrincipals bool `yaml:"UseServicePrincipals"`
 }
-type spec struct {
+type Spec struct {
 	MaxPodsperNode          int      `yaml:"maxPodCount"`
 	Id                      string   `yaml:"id"`
 	PodSubnetId             []string `yaml:"podSubnetIds"`
@@ -175,7 +175,7 @@ type NativepodNetwork struct {
 	APIVersion string   `yaml:"apiVersion"`
 	Kind       string   `yaml:"kind"`
 	metadata   Metadata `yaml:"metadata"`
-	Specs      spec     `yaml:"spec"`
+	Specs      Spec     `yaml:"spec"`
 }
 
 // Complete the load balancer config applying defaults / overrides.

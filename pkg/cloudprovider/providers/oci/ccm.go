@@ -24,7 +24,7 @@ import (
 	"sync"
 	"time"
 
-	//npnv1beta1 "github.com/oracle/oci-cloud-controller-manager/api/v1beta1"
+	npnv1beta1 "github.com/oracle/oci-cloud-controller-manager/api/v1beta1"
 	"github.com/oracle/oci-cloud-controller-manager/controllers"
 	providercfg "github.com/oracle/oci-cloud-controller-manager/pkg/cloudprovider/providers/oci/config"
 	"github.com/oracle/oci-cloud-controller-manager/pkg/metrics"
@@ -41,7 +41,7 @@ import (
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/informers"
 	clientset "k8s.io/client-go/kubernetes"
-	//"clientgoscheme "k8s.io/client-go/kubernetes/scheme"
+	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 	listersv1 "k8s.io/client-go/listers/core/v1"
 	"k8s.io/client-go/tools/cache"
 	cloudprovider "k8s.io/cloud-provider"
@@ -213,8 +213,8 @@ func (cp *CloudProvider) Initialize(clientBuilder cloudprovider.ControllerClient
 	//var logger *zap.SugaredLogger
 	var wg sync.WaitGroup
 	enableNIC := true
-cp.logger.Info("Reached the npn controller to start")
-	if  enableNIC {
+	cp.logger.Info("Reached the npn controller to start")
+	if enableNIC {
 		cp.logger.Info("NPNCR-CONTROLLER")
 		wg.Add(1)
 		// logger = logger.With(zap.String("component", "npncr-controller"))
@@ -222,6 +222,8 @@ cp.logger.Info("Reached the npn controller to start")
 		// logger.Info("NPN_CR controller is enabled.")
 		defer wg.Done()
 		cp.logger.Info("NPNCR-CONTROLLER SETTING UP")
+		utilruntime.Must(clientgoscheme.AddToScheme(schemes))
+		utilruntime.Must(npnv1beta1.AddToScheme(schemes))
 		mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), ctrl.Options{
 			Scheme:                  schemes,
 			MetricsBindAddress:      ":8080",
@@ -242,7 +244,7 @@ cp.logger.Info("Reached the npn controller to start")
 			cp.logger.Info("controller is setup properly")
 		}
 	}
-cp.logger.Info("npncr controller setup properly")
+	cp.logger.Info("npncr controller setup properly")
 	// if enableNIC  {
 	// 	wg.Add(1)
 	// 	logger = cp.logger.With(zap.String("component", "npn-controller"))

@@ -36,13 +36,12 @@ func TestValidateNPN(t *testing.T) {
 				APIVersion: "oraclecloud",
 				Kind:       "npn-sample",
 				metadata:   Metadata{name: "oracle"},
-				Specs: spec{
+				Specs: Spec{
 					MaxPodsperNode:          12,
 					Id:                      "ocid1.aaaaaaaaaaaaaa",
 					PodSubnetId:             []string{"ocid1.aaaaaaaaaaaaaaaaaaaaaa"},
 					NetworkSecurityGroupIds: []string{},
 				},
-				metadataSvc: nil,
 			},
 
 			errs: field.ErrorList{},
@@ -56,7 +55,7 @@ func TestValidateNPN(t *testing.T) {
 					name: "oracle",
 				},
 				Kind: "npn-sample",
-				Specs: spec{
+				Specs: Spec{
 					MaxPodsperNode: 12,
 
 					Id: "ocid1.aaaaaaaaaaaaaa",
@@ -80,7 +79,7 @@ func TestValidateNPN(t *testing.T) {
 					name: "oracle",
 				},
 				Kind: "npn-sample",
-				Specs: spec{
+				Specs: Spec{
 
 					PodSubnetId: []string{"ocid1.aaaaaaaaaaaaaaaaaaaaaa"},
 					Id:          "ocid1.aaaaaaaaaaaaaa",
@@ -97,7 +96,7 @@ func TestValidateNPN(t *testing.T) {
 					name: "oracle",
 				},
 				Kind: "npn-sample",
-				Specs: spec{
+				Specs: Spec{
 					MaxPodsperNode: 125,
 					PodSubnetId:    []string{"ocid1.aaaaaaaaaaaaaaaaaaaaaa"},
 					Id:             "ocid1.aaaaaaaaaaaaaa",
