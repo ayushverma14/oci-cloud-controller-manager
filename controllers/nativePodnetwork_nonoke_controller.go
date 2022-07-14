@@ -19,7 +19,7 @@ package controllers
 import (
 	"context"
 	//"sync"
-
+    
 	"time"
 
 	"go.uber.org/zap"
@@ -92,6 +92,7 @@ func Add(mgr manager.Manager) error {
 		}})
 	logger.Info("watching npn")
 	if err != nil {
+		log.Log.Error(err,"err")
 		return err
 	}
 
@@ -100,6 +101,7 @@ func Add(mgr manager.Manager) error {
 		&source.Kind{Type: &npnv1beta1.NativePodNetwork{}},
 		&handler.EnqueueRequestForObject{})
 	if err != nil {
+		log.Log.Error(err,"err")
 		return err
 	}
 	logger.Info("watching nodes")
@@ -111,6 +113,7 @@ func Add(mgr manager.Manager) error {
 			OwnerType:    &npnv1beta1.NativePodNetwork{},
 		})
 	if err != nil {
+		log.Log.Error(err,"err")
 		return err
 	}
 
