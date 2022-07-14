@@ -245,21 +245,22 @@ func (cp *CloudProvider) Initialize(clientBuilder cloudprovider.ControllerClient
 			cp.logger.Info("controller is setup properly")
 		}
 		if err := mgr.AddHealthzCheck("healthz", healthz.Ping); err != nil {
-			npnSetupLog.Error(err, "unable to set up health check")
+			cp.logger.Error(err, "unable to set up health check")
 			os.Exit(1)
 		}
+		cp.logger.Info("health checkupy")
 		if err := mgr.AddReadyzCheck("readyz", healthz.Ping); err != nil {
-			npnSetupLog.Error(err, "unable to set up ready check")
+			cp.logger.Error(err, "unable to set up ready check")
 			os.Exit(1)
 		}
-
-		npnSetupLog.Info("starting manager")
+		cp.logger.Info(" manager ready")
+		cp.logger.Info("starting manager")
 		if err := mgr.Start(ctrl.SetupSignalHandler()); err != nil {
-			npnSetupLog.Error(err, "problem running manager")
+			cp.logger.Error(err, "problem running manager")
 			// TODO: Handle the case of NPN controller not running more gracefully
 			os.Exit(1)
 		}
-		
+
 		cp.logger.Info("manager running")
 	}
 	cp.logger.Info("npncr controller setup properly")
@@ -312,21 +313,21 @@ func (cp *CloudProvider) Initialize(clientBuilder cloudprovider.ControllerClient
 	// 			os.Exit(1)
 	// 		}
 
-			// if err := mgr.AddHealthzCheck("healthz", healthz.Ping); err != nil {
-			// 	npnSetupLog.Error(err, "unable to set up health check")
-			// 	os.Exit(1)
-			// }
-			// if err := mgr.AddReadyzCheck("readyz", healthz.Ping); err != nil {
-			// 	npnSetupLog.Error(err, "unable to set up ready check")
-			// 	os.Exit(1)
-			// }
+	// if err := mgr.AddHealthzCheck("healthz", healthz.Ping); err != nil {
+	// 	npnSetupLog.Error(err, "unable to set up health check")
+	// 	os.Exit(1)
+	// }
+	// if err := mgr.AddReadyzCheck("readyz", healthz.Ping); err != nil {
+	// 	npnSetupLog.Error(err, "unable to set up ready check")
+	// 	os.Exit(1)
+	// }
 
-			// npnSetupLog.Info("starting manager")
-			// if err := mgr.Start(ctrl.SetupSignalHandler()); err != nil {
-			// 	npnSetupLog.Error(err, "problem running manager")
-			// 	// TODO: Handle the case of NPN controller not running more gracefully
-			// 	os.Exit(1)
-			// }
+	// npnSetupLog.Info("starting manager")
+	// if err := mgr.Start(ctrl.SetupSignalHandler()); err != nil {
+	// 	npnSetupLog.Error(err, "problem running manager")
+	// 	// TODO: Handle the case of NPN controller not running more gracefully
+	// 	os.Exit(1)
+	// }
 	// 	}()
 	// }
 	wg.Wait()

@@ -19,7 +19,7 @@ package controllers
 import (
 	"context"
 	//"sync"
-    
+
 	"time"
 
 	"go.uber.org/zap"
@@ -90,9 +90,10 @@ func Add(mgr manager.Manager) error {
 			Client: mgr.GetClient(),
 			Scheme: mgr.GetScheme(),
 		}})
+
 	logger.Info("watching npn")
 	if err != nil {
-		log.Log.Error(err,"err")
+		log.Log.Error(err, "err")
 		return err
 	}
 
@@ -101,7 +102,7 @@ func Add(mgr manager.Manager) error {
 		&source.Kind{Type: &npnv1beta1.NativePodNetwork{}},
 		&handler.EnqueueRequestForObject{})
 	if err != nil {
-		log.Log.Error(err,"err")
+		log.Log.Error(err, "err")
 		return err
 	}
 	logger.Info("watching nodes")
@@ -114,7 +115,7 @@ func Add(mgr manager.Manager) error {
 		})
 
 	if err != nil {
-		log.Log.Error(err,"err")
+		log.Log.Error(err, "err")
 		return err
 	}
 
@@ -155,13 +156,18 @@ func (r NativePodNetworkNONOKEReconciler) getNodeObjectInCluster(ctx context.Con
 	return &nodeObject, err
 }
 
+//+kubebuilder:rbac:groups=oci.oraclecloud.com,resources=nativepodnetworkings,verbs=get;list;watch;create;update;patch;delete
+//+kubebuilder:rbac:groups=oci.oraclecloud.com,resources=nativepodnetworkings/status,verbs=get;update;patch
+//+kubebuilder:rbac:groups=oci.oraclecloud.com,resources=nativepodnetworkings/finalizers,verbs=update
+
 func (r *NativePodNetworkNONOKEReconciler) Reconcile(ctx context.Context, request reconcile.Request) (reconcile.Result, error) {
-	log := log.FromContext(ctx)
+
 	var npn = &npnv1beta1.NativePodNetwork{}
-	log.Info("Reconciling........")
+	log := zap.L()
+	log.Info("Reconciling--------------------")
 	_, err := r.getNodeObjectInCluster(context.TODO(), request.NamespacedName)
 	if err != nil {
-		log.Error(err,"not able to fetch object")
+		log.Info("error")
 		return reconcile.Result{}, err
 	}
 
@@ -199,10 +205,10 @@ func (r *NativePodNetworkNONOKEReconciler) Reconcile(ctx context.Context, reques
 		}
 		// Error reading the object - requeue the request.
 		return reconcile.Result{}, err
-	}	else {
+	} else {
 		log.Info("npn  already present on node")
 	}
 	log.Info("npn present on node")
-	
+
 	return reconcile.Result{}, err
 }
