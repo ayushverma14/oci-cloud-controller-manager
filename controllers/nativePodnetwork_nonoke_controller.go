@@ -89,6 +89,7 @@ func Add(mgr manager.Manager) error {
 			Client: mgr.GetClient(),
 			Scheme: scheme,
 		}})
+	fmt.Print("watching nodes")
 	if err != nil {
 		return err
 	}

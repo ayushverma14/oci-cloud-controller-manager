@@ -172,11 +172,10 @@ type Metadata struct {
 	name string `yaml:"name"`
 }
 type NativepodNetwork struct {
-	APIVersion  string   `yaml:"apiVersion"`
-	Kind        string   `yaml:"kind"`
-	metadata    Metadata `yaml:"metadata"`
-	Specs       spec     `yaml:"spec"`
-	metadataSvc metadata.Interface
+	APIVersion string   `yaml:"apiVersion"`
+	Kind       string   `yaml:"kind"`
+	metadata   Metadata `yaml:"metadata"`
+	Specs      spec     `yaml:"spec"`
 }
 
 // Complete the load balancer config applying defaults / overrides.
