@@ -163,22 +163,26 @@ func (r NativePodNetworkNONOKEReconciler) getNodeObjectInCluster(ctx context.Con
 func (r *NativePodNetworkNONOKEReconciler) Reconcile(ctx context.Context, request reconcile.Request) (reconcile.Result, error) {
 
 	var npn = &npnv1beta1.NativePodNetwork{}
-	log := zap.L()
-	log.Info("Reconciling--------------------")
+	login := zap.L()
+	logger := log.FromContext(ctx)
+	login.Info("Reconciling--------------------")
 	_, err := r.getNodeObjectInCluster(context.TODO(), request.NamespacedName)
 	if err != nil {
-		log.Info("error")
+		logger.Error(err,"error")
 		return reconcile.Result{}, err
 	}
-
+	login.Info("fetched info about node")
 	err = r.Get(context.TODO(), request.NamespacedName, npn)
 	if err != nil {
-		log.Info("npn not present on node")
+		login.Info("npn not present on node")
+		logger.Error(err,"error")
+
 		if apierrors.IsNotFound(err) {
 			// Object not found, return.  Created objects are automatically garbage collected.
 			// For additional cleanup logic use finalizers.
 
 			if err != nil {
+				logger.Error(err,"error")
 				return reconcile.Result{}, err
 			}
 			var cfg providercfg.Spec
@@ -206,9 +210,9 @@ func (r *NativePodNetworkNONOKEReconciler) Reconcile(ctx context.Context, reques
 		// Error reading the object - requeue the request.
 		return reconcile.Result{}, err
 	} else {
-		log.Info("npn  already present on node")
+		login.Info("npn  already present on node")
 	}
-	log.Info("npn present on node")
+	login.Info("npn present on node")
 
 	return reconcile.Result{}, err
 }
