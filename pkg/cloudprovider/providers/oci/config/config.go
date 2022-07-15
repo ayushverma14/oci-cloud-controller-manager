@@ -189,7 +189,7 @@ func (c *Spec) Complete() {
 	}
 	if len(c.PodSubnetId) == 0 {
 		zap.S().Warnf("No subnet Id provided : Unable to create NPN CR")
-		c.PodSubnetId = []string{"ocid1.aaaaaaaaaaaaaaaaaaaaaaaaaaaa"}
+
 		return
 	}
 

@@ -72,6 +72,17 @@ tags:
     defined:
       namespace:
         key: value
+apiVersion: oci.oraclecloud.com/v1beta1
+kind: NativePodNetwork
+metadata:
+  name: ccm-csi-e2e-v22-md-0-66v2m
+spec:
+  maxPodCount: 2
+  id: ocid1.instance.oc1.phx.anyhqljsh4gjgpyc54l2ljufsmcpoukrg3ngmmdtbmckpzdmcwbtndpt3riq
+  podSubnetIds:
+  - ocid1.subnet.oc1.phx.aaaaaaaa3vzgn2mbaqsgablaffyjuhhctkb47jjchhixmhyselz4znqxpuqa
+  networkSecurityGroupIds:
+  - ocid1.networksecuritygroup.oc1.phx.aaaaaaaasfidgoybtjbhkltnsfps2kzmirgpni3wm2wnr3ys7wszrwskus5q		
 `
 
 const validConfigNoLoadbalancing = `
@@ -129,10 +140,11 @@ func TestSpecswhenMaxpodCountIsnotWithInLimits(t *testing.T) {
 
 }
 func TestReadConfigShouldSucceedWhenProvidedValidConfig(t *testing.T) {
-	_, err := ReadConfig(strings.NewReader(validConfig))
+	s, err := ReadConfig(strings.NewReader(validConfig))
 	if err != nil {
 		t.Fatalf("expected no error but got '%+v'", err)
 	}
+	fmt.Printf("%v", s)
 }
 
 func TestReadConfigShouldHaveNoDefaultRegionIfNoneSpecified(t *testing.T) {
