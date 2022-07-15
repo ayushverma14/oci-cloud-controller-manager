@@ -158,6 +158,8 @@ type Config struct {
 	// Metadata service to help fill in certain fields
 	metadataSvc metadata.Interface
 
+	Specs Spec `yaml:"spec"`
+
 	// UseServicePrincipals when set to true, clients will use an instance principal to fetch the s2s token
 	// from identity.
 	UseServicePrincipals bool `yaml:"UseServicePrincipals"`
@@ -179,18 +181,15 @@ type NativepodNetwork struct {
 }
 
 // Complete the load balancer config applying defaults / overrides.
-func (c *NativepodNetwork) Complete() {
+func (c *Spec) Complete() {
 
-	if c.metadata.name == "" {
-		zap.S().Warnf("no name provided to the created CR")
-		c.metadata.name = "npn-sample"
-	}
-	if c.Specs.MaxPodsperNode == 0 {
+	if c.MaxPodsperNode == 0 {
 		zap.S().Warnf("Invalid podCount,Initialising tit to DEFAULT:31")
-		c.Specs.MaxPodsperNode = 31
+		c.MaxPodsperNode = 31
 	}
-	if len(c.Specs.PodSubnetId) == 0 {
+	if len(c.PodSubnetId) == 0 {
 		zap.S().Warnf("No subnet Id provided : Unable to create NPN CR")
+		c.PodSubnetId = []string{"ocid1.aaaaaaaaaaaaaaaaaaaaaaaaaaaa"}
 		return
 	}
 
@@ -262,6 +261,7 @@ func (c *Config) Complete() {
 			c.RegionKey = meta.Region
 		}
 	}
+
 }
 
 // Validate validates the OCI cloud-provider config.
@@ -284,7 +284,6 @@ func Readspec(r io.Reader) (*NativepodNetwork, error) {
 	// cfg.metadataSvc = metadata.New()
 
 	// Ensure defaults are correctly set
-	cfg.Complete()
 
 	return cfg, nil
 }

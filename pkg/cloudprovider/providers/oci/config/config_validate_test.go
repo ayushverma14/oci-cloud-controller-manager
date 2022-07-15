@@ -116,7 +116,7 @@ func TestValidateNPN(t *testing.T) {
 
 	for _, tt := range testCases {
 		t.Run(tt.name, func(t *testing.T) {
-			tt.in.Complete()
+			tt.in.Specs.Complete()
 			result := validateNPN(tt.in)
 			// fmt.Printf("errors: '%+v' \n '%+v' ",tt.errs,result)
 			// var x bool

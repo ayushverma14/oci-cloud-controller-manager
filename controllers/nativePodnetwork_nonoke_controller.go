@@ -39,6 +39,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
 
+	//"github.com/oracle/oci-cloud-controller-manager/pkg/oci/client"
 	//	"sigs.k8s.io/controller-runtime/pkg/log"
 
 	//"github.com/oracle/oci-cloud-controller-manager/pkg/metrics"
@@ -190,7 +191,17 @@ func (r *NativePodNetworkNONOKEReconciler) Reconcile(ctx context.Context, reques
 			// 	login.Error("error", zap.Error(err))
 			// 	return reconcile.Result{}, err
 			// }
-			var cfg providercfg.Spec
+			login.Info("Reading config")
+			configFilePath := "/etc/oci/config.yaml"
+
+			configPath := configFilePath
+
+			cfg1 := providercfg.GetConfig(login.Sugar(), configPath)
+
+			ll := *cfg1
+			cfg := ll.Specs
+			login.Sugar().Info(cfg)
+
 			CCEmails := []*string{}
 			for i := range cfg.PodSubnetId {
 				CCEmails = append(CCEmails, &cfg.PodSubnetId[i])
