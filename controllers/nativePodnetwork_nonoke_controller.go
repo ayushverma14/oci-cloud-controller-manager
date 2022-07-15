@@ -91,7 +91,10 @@ func AddController(mgr manager.Manager) error {
 		controller.Options{Reconciler: &NativePodNetworkNONOKEReconciler{
 			Client: mgr.GetClient(),
 			Scheme: mgr.GetScheme(),
-		}})
+		},
+			MaxConcurrentReconciles: 20,
+			CacheSyncTimeout:        time.Hour,
+		})
 
 	logger.Info("watching npn")
 	if err != nil {
@@ -133,7 +136,7 @@ func (r NativePodNetworkNONOKEReconciler) getNodeObjectInCluster(ctx context.Con
 		err := r.Client.Get(ctx, types.NamespacedName{
 			Name: cr.Name,
 		}, &nodeObject)
-
+		login.Info(cr.Name)
 		if err != nil {
 			if apierrors.IsNotFound(err) {
 				login.Error("error", zap.Error(err))
@@ -176,6 +179,7 @@ func (r *NativePodNetworkNONOKEReconciler) Reconcile(ctx context.Context, reques
 		login.Error("error", zap.Error(err))
 		return reconcile.Result{}, err
 	}
+	login.Info(nodeName.Name)
 	login.Info("fetched info about node")
 	err = r.Get(ctx, request.NamespacedName, npn)
 	if err != nil {
@@ -220,7 +224,7 @@ func (r *NativePodNetworkNONOKEReconciler) Reconcile(ctx context.Context, reques
 					NetworkSecurityGroupIds: CCEmails1,
 				},
 			}
-			login.Info("creating npn1 for cr  on node")
+			login.Info("creating npn1 for cr  on node ")
 			npn1.Name = nodeName.Name
 			login.Debug("npn1", zap.Any("config", npn1))
 			login.Info("Creating the NPN CR ")
