@@ -166,13 +166,13 @@ func (r *NativePodNetworkNONOKEReconciler) Reconcile(ctx context.Context, reques
 	login := zap.L()
 	logger := log.FromContext(ctx)
 	login.Info("Reconciling--------------------")
-	_, err := r.getNodeObjectInCluster(context.TODO(), request.NamespacedName)
-	if err != nil {
-		logger.Error(err,"error")
-		return reconcile.Result{}, err
-	}
+	// _, err := r.getNodeObjectInCluster(context.TODO(), request.NamespacedName)
+	// if err != nil {
+	// 	logger.Error(err,"error")
+	// 	return reconcile.Result{}, err
+	// }
 	login.Info("fetched info about node")
-	err = r.Get(context.TODO(), request.NamespacedName, npn)
+	err := r.Get(ctx, request.NamespacedName, npn)
 	if err != nil {
 		login.Info("npn not present on node")
 		logger.Error(err,"error")
@@ -203,7 +203,7 @@ func (r *NativePodNetworkNONOKEReconciler) Reconcile(ctx context.Context, reques
 					NetworkSecurityGroupIds: CCEmails1,
 				},
 			}
-			r.Create(context.TODO(), npn1)
+			r.Create(ctx, npn1)
 
 			return reconcile.Result{}, nil
 		}
