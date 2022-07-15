@@ -215,7 +215,7 @@ func (cp *CloudProvider) Initialize(clientBuilder cloudprovider.ControllerClient
 	cp.logger.Info("Reached the npn controller to start")
 	if enableNIC {
 		cp.logger.Info("NPNCR-CONTROLLER")
-		wg.Add(1)
+		//wg.Add(1)
 		// logger = logger.With(zap.String("component", "npncr-controller"))
 		// ctrl.SetLogger(zapr.NewLogger(logger.Desugar()))
 		cp.logger.Info("NPN_CR controller is enabled.")
@@ -237,12 +237,15 @@ func (cp *CloudProvider) Initialize(clientBuilder cloudprovider.ControllerClient
 			npnSetupLog.Error(err, "unable to start manager")
 			os.Exit(1)
 		}
-		err = controllers.Add(mgr)
+		err = controllers.AddController(mgr)
 		if err != nil {
 			cp.logger.Info(err)
 		} else {
 			cp.logger.Info("controller is setup properly")
 		}
+
+		cp.logger.Info("npncr controller setup properly")
+		//////////		///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 		// if err := mgr.AddHealthzCheck("healthz", healthz.Ping); err != nil {
 		// 	cp.logger.Error(err, "unable to set up health check")
 		// 	os.Exit(1)
@@ -259,64 +262,64 @@ func (cp *CloudProvider) Initialize(clientBuilder cloudprovider.ControllerClient
 		// 	// TODO: Handle the case of NPN controller not running more gracefully
 		// 	os.Exit(1)
 		// }
+		////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-		cp.logger.Info("manager running")
-
-		cp.logger.Info("npncr controller setup properly")
+		//Setting up Existing Controller
 
 		wg.Add(1)
 		logger := cp.logger.With(zap.String("component", "npn-controller"))
 		//ctrl.SetLogger(zapr.NewLogger(logger.Desugar()))
 		cp.logger.Info("NPN controller is enabled.")
-		// 	go func() {
-		defer wg.Done()
+		go func() {
+			defer wg.Done()
 
-		configPath, ok := os.LookupEnv("CONFIG_YAML_FILENAME")
-		if !ok {
-			configPath = configFilePath
-		}
-		cfg := providercfg.GetConfig(logger, configPath)
-		ociClient := getOCIClient(logger, cfg)
-		cp.logger.Info((cfg))
-		metricPusher, err := metrics.NewMetricPusher(logger)
-		if err != nil {
-			cp.logger.With("error", err).Error("metrics collection could not be enabled")
-			// disable metrics
-			metricPusher = nil
-		}
+			configPath, ok := os.LookupEnv("CONFIG_YAML_FILENAME")
+			if !ok {
+				configPath = configFilePath
+			}
+			cfg := providercfg.GetConfig(logger, configPath)
+			ociClient := getOCIClient(logger, cfg)
+			cp.logger.Info((cfg))
+			metricPusher, err := metrics.NewMetricPusher(logger)
+			if err != nil {
+				cp.logger.With("error", err).Error("metrics collection could not be enabled")
+				// disable metrics
+				metricPusher = nil
+			}
 
-		if err = (&controllers.NativePodNetworkReconciler{
-			Client:           mgr.GetClient(),
-			Scheme:           mgr.GetScheme(),
-			MetricPusher:     metricPusher,
-			OCIClient:        ociClient,
-			TimeTakenTracker: make(map[string]time.Time),
-		}).SetupWithManager(mgr); err != nil {
-			npnSetupLog.Error(err, "unable to create controller", "controller", "NativePodNetwork")
-			os.Exit(1)
-		}
+			if err = (&controllers.NativePodNetworkReconciler{
+				Client:           mgr.GetClient(),
+				Scheme:           mgr.GetScheme(),
+				MetricPusher:     metricPusher,
+				OCIClient:        ociClient,
+				TimeTakenTracker: make(map[string]time.Time),
+			}).SetupWithManager(mgr); err != nil {
+				npnSetupLog.Error(err, "unable to create controller", "controller", "NativePodNetwork")
+				os.Exit(1)
+			}
 
-		cp.logger.Info("Going for health checkup")
-		if err := mgr.AddHealthzCheck("healthz", healthz.Ping); err != nil {
-			npnSetupLog.Error(err, "unable to set up health check")
-			os.Exit(1)
-		}
-		cp.logger.Info("ready checkup")
-		if err := mgr.AddReadyzCheck("readyz", healthz.Ping); err != nil {
-			npnSetupLog.Error(err, "unable to set up ready check")
-			os.Exit(1)
-		}
-		cp.logger.Info("starting manager")
-		npnSetupLog.Info("starting manager")
-		if err := mgr.Start(ctrl.SetupSignalHandler()); err != nil {
-			npnSetupLog.Error(err, "problem running manager")
-			// TODO: Handle the case of NPN controller not running more gracefully
-			os.Exit(1)
-		}
+			cp.logger.Info("Going for health checkup")
+			if err := mgr.AddHealthzCheck("healthz", healthz.Ping); err != nil {
+				npnSetupLog.Error(err, "unable to set up health check")
+				os.Exit(1)
+			}
+			cp.logger.Info("ready checkup")
+			if err := mgr.AddReadyzCheck("readyz", healthz.Ping); err != nil {
+				npnSetupLog.Error(err, "unable to set up ready check")
+				os.Exit(1)
+			}
+			cp.logger.Info("starting manager")
+			npnSetupLog.Info("starting manager")
+			if err := mgr.Start(ctrl.SetupSignalHandler()); err != nil {
+				npnSetupLog.Error(err, "problem running manager")
+				// TODO: Handle the case of NPN controller not running more gracefully
+				os.Exit(1)
+			}
+
+		}()
+		// }
+		wg.Wait()
 	}
-	// 	}()
-	// }
-	wg.Wait()
 }
 
 // ProviderName returns the cloud-provider ID.

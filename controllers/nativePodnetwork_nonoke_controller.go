@@ -82,7 +82,7 @@ type NativePodNetworkNONOKEReconciler struct {
 	// Config           *config.NativepodNetwork
 }
 
-func Add(mgr manager.Manager) error {
+func AddController(mgr manager.Manager) error {
 	// Create a new Controller
 	logger := zap.L()
 
@@ -176,15 +176,15 @@ func (r *NativePodNetworkNONOKEReconciler) Reconcile(ctx context.Context, reques
 	err := r.Get(ctx, request.NamespacedName, npn)
 	if err != nil {
 		login.Info("npn not present on node")
-
+		login.Error("error", zap.Error(err))
 		log.Println(err)
 
 		if apierrors.IsNotFound(err) {
 			// Object not found, return.  Created objects are automatically garbage collected.
 			// For additional cleanup logic use finalizers.
-
+			login.Info("creating npn cr on node")
 			if err != nil {
-				log.Println(err)
+				login.Error("error", zap.Error(err))
 				return reconcile.Result{}, err
 			}
 			var cfg providercfg.Spec
@@ -206,7 +206,7 @@ func (r *NativePodNetworkNONOKEReconciler) Reconcile(ctx context.Context, reques
 				},
 			}
 			r.Create(ctx, npn1)
-
+			login.Info("created the CR successfully")
 			return reconcile.Result{}, nil
 		}
 		// Error reading the object - requeue the request.
