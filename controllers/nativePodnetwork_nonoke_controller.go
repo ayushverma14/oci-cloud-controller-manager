@@ -19,7 +19,7 @@ package controllers
 import (
 	"context"
 	//"sync"
-
+	"log"
 	"time"
 
 	"go.uber.org/zap"
@@ -38,7 +38,8 @@ import (
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
-	"sigs.k8s.io/controller-runtime/pkg/log"
+
+	//	"sigs.k8s.io/controller-runtime/pkg/log"
 
 	//"github.com/oracle/oci-cloud-controller-manager/pkg/metrics"
 	//	ociclient "github.com/oracle/oci-cloud-controller-manager/pkg/oci/client"
@@ -93,7 +94,7 @@ func Add(mgr manager.Manager) error {
 
 	logger.Info("watching npn")
 	if err != nil {
-		log.Log.Error(err, "err")
+		log.Println(err, "err")
 		return err
 	}
 
@@ -102,7 +103,7 @@ func Add(mgr manager.Manager) error {
 		&source.Kind{Type: &npnv1beta1.NativePodNetwork{}},
 		&handler.EnqueueRequestForObject{})
 	if err != nil {
-		log.Log.Error(err, "err")
+		log.Println(err, "err")
 		return err
 	}
 	logger.Info("watching nodes")
@@ -115,7 +116,7 @@ func Add(mgr manager.Manager) error {
 		})
 
 	if err != nil {
-		log.Log.Error(err, "err")
+		log.Println(err, "err")
 		return err
 	}
 
@@ -133,10 +134,10 @@ func (r NativePodNetworkNONOKEReconciler) getNodeObjectInCluster(ctx context.Con
 
 		if err != nil {
 			if apierrors.IsNotFound(err) {
-				log.Log.Error(err, "node object does not exist in cluster")
+				log.Println(err, "node object does not exist in cluster")
 				return false, nil
 			}
-			log.Log.Error(err, "failed to get node object")
+			log.Println(err, "failed to get node object")
 			return false, err
 		}
 		return true, nil
@@ -145,13 +146,13 @@ func (r NativePodNetworkNONOKEReconciler) getNodeObjectInCluster(ctx context.Con
 	err := wait.PollImmediate(time.Second*5, GetNodeTimeout, func() (bool, error) {
 		present, err := nodePresentInCluster()
 		if err != nil {
-			log.Log.Error(err, "failed to get node from cluster")
+			log.Println(err, "failed to get node from cluster")
 			return false, err
 		}
 		return present, nil
 	})
 	if err != nil {
-		log.Log.Error(err, "timed out waiting for node object to be present in the cluster")
+		log.Println(err, "timed out waiting for node object to be present in the cluster")
 	}
 	return &nodeObject, err
 }
@@ -164,7 +165,7 @@ func (r *NativePodNetworkNONOKEReconciler) Reconcile(ctx context.Context, reques
 
 	var npn = &npnv1beta1.NativePodNetwork{}
 	login := zap.L()
-	logger := log.FromContext(ctx)
+
 	login.Info("Reconciling--------------------")
 	// _, err := r.getNodeObjectInCluster(context.TODO(), request.NamespacedName)
 	// if err != nil {
@@ -175,14 +176,15 @@ func (r *NativePodNetworkNONOKEReconciler) Reconcile(ctx context.Context, reques
 	err := r.Get(ctx, request.NamespacedName, npn)
 	if err != nil {
 		login.Info("npn not present on node")
-		logger.Error(err,"error")
+
+		log.Println(err)
 
 		if apierrors.IsNotFound(err) {
 			// Object not found, return.  Created objects are automatically garbage collected.
 			// For additional cleanup logic use finalizers.
 
 			if err != nil {
-				logger.Error(err,"error")
+				log.Println(err)
 				return reconcile.Result{}, err
 			}
 			var cfg providercfg.Spec

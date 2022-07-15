@@ -35,7 +35,6 @@ import (
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
 
-	//"github.com/go-logr/zapr"
 	"k8s.io/apimachinery/pkg/runtime"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	"k8s.io/apimachinery/pkg/util/wait"
@@ -262,61 +261,59 @@ func (cp *CloudProvider) Initialize(clientBuilder cloudprovider.ControllerClient
 		// }
 
 		cp.logger.Info("manager running")
-	
-	cp.logger.Info("npncr controller setup properly")
-	
-	wg.Add(1)
+
+		cp.logger.Info("npncr controller setup properly")
+
+		wg.Add(1)
 		logger := cp.logger.With(zap.String("component", "npn-controller"))
-		// ctrl.SetLogger(zapr.NewLogger(logger.Desugar()))
+		//ctrl.SetLogger(zapr.NewLogger(logger.Desugar()))
 		cp.logger.Info("NPN controller is enabled.")
-	// 	go func() {
-			defer wg.Done()
-			
+		// 	go func() {
+		defer wg.Done()
 
-			configPath, ok := os.LookupEnv("CONFIG_YAML_FILENAME")
-			if !ok {
-				configPath = configFilePath
-			}
-			cfg := providercfg.GetConfig(logger, configPath)
-			ociClient := getOCIClient(logger, cfg)
+		configPath, ok := os.LookupEnv("CONFIG_YAML_FILENAME")
+		if !ok {
+			configPath = configFilePath
+		}
+		cfg := providercfg.GetConfig(logger, configPath)
+		ociClient := getOCIClient(logger, cfg)
+		cp.logger.Info((cfg))
+		metricPusher, err := metrics.NewMetricPusher(logger)
+		if err != nil {
+			cp.logger.With("error", err).Error("metrics collection could not be enabled")
+			// disable metrics
+			metricPusher = nil
+		}
 
-	
+		if err = (&controllers.NativePodNetworkReconciler{
+			Client:           mgr.GetClient(),
+			Scheme:           mgr.GetScheme(),
+			MetricPusher:     metricPusher,
+			OCIClient:        ociClient,
+			TimeTakenTracker: make(map[string]time.Time),
+		}).SetupWithManager(mgr); err != nil {
+			npnSetupLog.Error(err, "unable to create controller", "controller", "NativePodNetwork")
+			os.Exit(1)
+		}
 
-			metricPusher, err := metrics.NewMetricPusher(logger)
-			if err != nil {
-				cp.logger.With("error", err).Error("metrics collection could not be enabled")
-				// disable metrics
-				metricPusher = nil
-			}
-
-			if err = (&controllers.NativePodNetworkReconciler{
-				Client:           mgr.GetClient(),
-				Scheme:           mgr.GetScheme(),
-				MetricPusher:     metricPusher,
-				OCIClient:        ociClient,
-				TimeTakenTracker: make(map[string]time.Time),
-			}).SetupWithManager(mgr); err != nil {
-				npnSetupLog.Error(err, "unable to create controller", "controller", "NativePodNetwork")
-				os.Exit(1)
-			}
-
-			cp.logger.Info("Going for health checkup")
-	if err := mgr.AddHealthzCheck("healthz", healthz.Ping); err != nil {
-		npnSetupLog.Error(err, "unable to set up health check")
-		os.Exit(1)
+		cp.logger.Info("Going for health checkup")
+		if err := mgr.AddHealthzCheck("healthz", healthz.Ping); err != nil {
+			npnSetupLog.Error(err, "unable to set up health check")
+			os.Exit(1)
+		}
+		cp.logger.Info("ready checkup")
+		if err := mgr.AddReadyzCheck("readyz", healthz.Ping); err != nil {
+			npnSetupLog.Error(err, "unable to set up ready check")
+			os.Exit(1)
+		}
+		cp.logger.Info("starting manager")
+		npnSetupLog.Info("starting manager")
+		if err := mgr.Start(ctrl.SetupSignalHandler()); err != nil {
+			npnSetupLog.Error(err, "problem running manager")
+			// TODO: Handle the case of NPN controller not running more gracefully
+			os.Exit(1)
+		}
 	}
-	cp.logger.Info("ready checkup")
-	if err := mgr.AddReadyzCheck("readyz", healthz.Ping); err != nil {
-		npnSetupLog.Error(err, "unable to set up ready check")
-		os.Exit(1)
-	}
-	cp.logger.Info("starting manager")
-	npnSetupLog.Info("starting manager")
-	if err := mgr.Start(ctrl.SetupSignalHandler()); err != nil {
-		npnSetupLog.Error(err, "problem running manager")
-		// TODO: Handle the case of NPN controller not running more gracefully
-		os.Exit(1)
-	}}
 	// 	}()
 	// }
 	wg.Wait()

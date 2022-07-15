@@ -68,7 +68,7 @@ require (
 	sigs.k8s.io/sig-storage-lib-external-provisioner/v6 v6.3.0
 )
 
-require github.com/go-logr/zapr v1.2.3 // indirect
+require github.com/go-logr/zapr v1.2.3
 
 require (
 	github.com/Azure/go-ansiterm v0.0.0-20210617225240-d185dfc1b5a1 // indirect
