@@ -195,11 +195,12 @@ func (r *NativePodNetworkNONOKEReconciler) Reconcile(ctx context.Context, reques
 			for i := range cfg.PodSubnetId {
 				CCEmails = append(CCEmails, &cfg.PodSubnetId[i])
 			}
+			login.Info("creating subnets ids for cr on node")
 			CCEmails1 := []*string{}
 			for i := range cfg.NetworkSecurityGroupIds {
 				CCEmails1 = append(CCEmails1, &cfg.NetworkSecurityGroupIds[i])
 			}
-
+			login.Info("creating nsfs for cr  on node")
 			var npn1 = &npnv1beta1.NativePodNetwork{
 				Spec: npnv1beta1.NativePodNetworkSpec{
 					MaxPodCount:             &cfg.MaxPodsperNode,
@@ -208,6 +209,7 @@ func (r *NativePodNetworkNONOKEReconciler) Reconcile(ctx context.Context, reques
 					NetworkSecurityGroupIds: CCEmails1,
 				},
 			}
+			login.Info("creating npn1 for cr  on node")
 			npn1.Name = nodeName.Name
 			login.Info("Creating the NPN CR ")
 			r.Create(ctx, npn1)
