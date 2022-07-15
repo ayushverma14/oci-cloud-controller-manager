@@ -211,8 +211,10 @@ func (r *NativePodNetworkNONOKEReconciler) Reconcile(ctx context.Context, reques
 			}
 			login.Info("creating npn1 for cr  on node")
 			npn1.Name = nodeName.Name
+			login.Debug("npn1", zap.Any("config", npn1))
 			login.Info("Creating the NPN CR ")
-			r.Create(ctx, npn1)
+			err := r.Create(ctx, npn1)
+			login.Error("error", zap.Error(err))
 			login.Info("created the CR successfully")
 			return reconcile.Result{}, nil
 		}
