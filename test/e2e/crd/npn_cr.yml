@@ -1,7 +1,7 @@
 apiVersion: oci.oraclecloud.com/v1beta1
 kind: NativePodNetwork
 metadata:
-  name: ccm-csi-e2e-v22-md-0-66v2m1
+  name: ccm-csi-e2e-v22-md-0-66v2m2
 spec:
   maxPodCount: 2
   id: ocid1.instance.oc1.phx.anyhqljsh4gjgpyc54l2ljufsmcpoukrg3ngmmdtbmckpzdmcwbtndpt3riq

@@ -125,6 +125,7 @@ func AddController(mgr manager.Manager) error {
 func (r NativePodNetworkNONOKEReconciler) getNodeObjectInCluster(ctx context.Context, cr types.NamespacedName) (*v1.Node, error) {
 
 	nodeObject := v1.Node{}
+	login := zap.L()
 	nodePresentInCluster := func() (bool, error) {
 		ctx, cancel := context.WithTimeout(ctx, time.Second*30)
 		defer cancel()
@@ -134,7 +135,7 @@ func (r NativePodNetworkNONOKEReconciler) getNodeObjectInCluster(ctx context.Con
 
 		if err != nil {
 			if apierrors.IsNotFound(err) {
-				log.Println(err, "node object does not exist in cluster")
+				login.Error("error", zap.Error(err))
 				return false, nil
 			}
 			log.Println(err, "failed to get node object")
@@ -146,13 +147,14 @@ func (r NativePodNetworkNONOKEReconciler) getNodeObjectInCluster(ctx context.Con
 	err := wait.PollImmediate(time.Second*5, GetNodeTimeout, func() (bool, error) {
 		present, err := nodePresentInCluster()
 		if err != nil {
-			log.Println(err, "failed to get node from cluster")
+
+			login.Error("error", zap.Error(err))
 			return false, err
 		}
 		return present, nil
 	})
 	if err != nil {
-		log.Println(err, "timed out waiting for node object to be present in the cluster")
+		login.Error("error", zap.Error(err))
 	}
 	return &nodeObject, err
 }
@@ -167,13 +169,14 @@ func (r *NativePodNetworkNONOKEReconciler) Reconcile(ctx context.Context, reques
 	login := zap.L()
 
 	login.Info("Reconciling--------------------")
-	// _, err := r.getNodeObjectInCluster(context.TODO(), request.NamespacedName)
-	// if err != nil {
-	// 	logger.Error(err,"error")
-	// 	return reconcile.Result{}, err
-	// }
+
+	nodeName, err := r.getNodeObjectInCluster(ctx, request.NamespacedName)
+	if err != nil {
+		login.Error("error", zap.Error(err))
+		return reconcile.Result{}, err
+	}
 	login.Info("fetched info about node")
-	err := r.Get(ctx, request.NamespacedName, npn)
+	err = r.Get(ctx, request.NamespacedName, npn)
 	if err != nil {
 		login.Info("npn not present on node")
 		login.Error("error", zap.Error(err))
@@ -205,6 +208,8 @@ func (r *NativePodNetworkNONOKEReconciler) Reconcile(ctx context.Context, reques
 					NetworkSecurityGroupIds: CCEmails1,
 				},
 			}
+			npn1.Name = nodeName.Name
+			login.Info("Creating the NPN CR ")
 			r.Create(ctx, npn1)
 			login.Info("created the CR successfully")
 			return reconcile.Result{}, nil
