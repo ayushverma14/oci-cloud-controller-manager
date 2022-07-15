@@ -186,10 +186,10 @@ func (r *NativePodNetworkNONOKEReconciler) Reconcile(ctx context.Context, reques
 			// Object not found, return.  Created objects are automatically garbage collected.
 			// For additional cleanup logic use finalizers.
 			login.Info("creating npn cr on node")
-			if err != nil {
-				login.Error("error", zap.Error(err))
-				return reconcile.Result{}, err
-			}
+			// if err != nil {
+			// 	login.Error("error", zap.Error(err))
+			// 	return reconcile.Result{}, err
+			// }
 			var cfg providercfg.Spec
 			CCEmails := []*string{}
 			for i := range cfg.PodSubnetId {
