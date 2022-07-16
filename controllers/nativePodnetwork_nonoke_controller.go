@@ -178,7 +178,7 @@ func (r *NativePodNetworkNONOKEReconciler) Reconcile(ctx context.Context, reques
 
 	login.Info("Reconciling--------------------")
 	login.Info("Generating Kubernetes clientset")
-	kcs, err := NewK8sClient("https://129.146.114.63:6443", "/etc/kubernetes/admin.conf")
+	kcs, err := NewK8sClient("https://129.146.114.63:6443", "github.com/oracle/oci-cloud-controller-manager/cmd/ccm-csi-e2e-v22.kubeconfig")
 
 	login.Error("error", zap.Error(err))
 	login.Info("Listing nodes")
