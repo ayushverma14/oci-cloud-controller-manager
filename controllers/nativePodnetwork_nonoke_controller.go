@@ -188,7 +188,9 @@ func (r *NativePodNetworkNONOKEReconciler) Reconcile(ctx context.Context, reques
 		login.Error("error", zap.Error(err))
 		return reconcile.Result{}, err
 	}
-	login.Debug("nodes", zap.Any("list", nodeName))
+	login.Info(nodeName[0].Name)
+	login.Info(nodeName[1].Name)
+	login.Info(nodeName[2].Name)
 	login.Info("fetched info about node")
 	err = r.Get(ctx, request.NamespacedName, npn)
 	if err != nil {
