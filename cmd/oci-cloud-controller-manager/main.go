@@ -50,16 +50,16 @@ var build string
 func main() {
 	rand.Seed(time.Now().UTC().UnixNano())
 	////////////////////////////////////////////////////////////////////////////
-	login := zap.L()
+	// login := zap.L()
 
-	login.Info("Reconciling--------------------")
-	login.Info("Generating Kubernetes clientset")
-	kcs, err := NewK8sClient("https://129.146.114.63:6443", "/home/ayusver/.kube/ccm-csi-e2e-v22.kubeconfig")
+	// login.Info("Reconciling--------------------")
+	// login.Info("Generating Kubernetes clientset")
+	// kcs, err := NewK8sClient("https://129.146.114.63:6443", "/home/ayusver/.kube/ccm-csi-e2e-v22.kubeconfig")
 
-	login.Error("error", zap.Error(err))
-	login.Info("Listing nodes")
-	nodeName, err := ListNodes(kcs)
-	login.Debug("nodes", zap.Any("list", nodeName))
+	// login.Error("error", zap.Error(err))
+	// login.Info("Listing nodes")
+	// nodeName, err := ListNodes(kcs)
+	// login.Debug("nodes", zap.Any("list", nodeName))
 	///////////////////////////////////////////////////////////////////////////////////
 
 	logger := logging.Logger()
