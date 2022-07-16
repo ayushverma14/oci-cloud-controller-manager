@@ -130,7 +130,7 @@ func AddController(mgr manager.Manager) error {
 
 	return nil
 }
-func (r NativePodNetworkNONOKEReconciler) getNodeObjectInCluster(ctx context.Context, cr types.NamespacedName) (*v1.Node, error) {
+func (r NativePodNetworkNONOKEReconciler) getNodeObjectInCluster(ctx context.Context, cr types.NamespacedName, nodeName string) (*v1.Node, error) {
 
 	nodeObject := v1.Node{}
 	login := zap.L()
@@ -138,7 +138,7 @@ func (r NativePodNetworkNONOKEReconciler) getNodeObjectInCluster(ctx context.Con
 		ctx, cancel := context.WithTimeout(ctx, time.Second*30)
 		defer cancel()
 		err := r.Client.Get(ctx, types.NamespacedName{
-			Name: cr.Name,
+			Name: nodeName,
 		}, &nodeObject)
 		login.Info(cr.Name)
 		if err != nil {
@@ -187,12 +187,19 @@ func (r *NativePodNetworkNONOKEReconciler) Reconcile(ctx context.Context, reques
 		login.Error("error", zap.Error(err))
 		return reconcile.Result{}, err
 	}
-	login.Sugar().Info(nodeName)
+
 	login.Info(nodeName[0].Name)
 	login.Info(nodeName[1].Name)
 	login.Info(nodeName[2].Name)
 	login.Info("fetched info about node")
-	err = r.Get(ctx, request.NamespacedName, npn)
+	name, err := r.getNodeObjectInCluster(ctx, request.NamespacedName, nodeName[0].Name)
+	if err != nil {
+		login.Error("error", zap.Error(err))
+	}
+	login.Sugar().Info(getLabel(name))
+	err = r.Get(ctx, types.NamespacedName{
+		Name: nodeName[0].Name,
+	}, npn)
 	if err != nil {
 		login.Info("npn not present on node")
 		login.Error("error", zap.Error(err))
@@ -236,7 +243,7 @@ func (r *NativePodNetworkNONOKEReconciler) Reconcile(ctx context.Context, reques
 				},
 			}
 			login.Info("creating npn1 for cr  on node ")
-
+			npn1.Name = nodeName[0].Name
 			login.Debug("npn1", zap.Any("config", npn1))
 			login.Info("Creating the NPN CR ")
 			err := r.Create(ctx, npn1)
@@ -275,4 +282,15 @@ func NewK8sClient(masterUrl, kubeconfigPath string) (kubernetes.Interface, error
 
 	// create the clientset
 	return kubernetes.NewForConfig(config)
+}
+func getLabel(node *v1.Node) bool {
+
+	login := zap.L()
+	if hh, ok := node.Labels["npn"]; ok {
+		login.Info(hh)
+
+		return true
+	}
+
+	return false
 }
