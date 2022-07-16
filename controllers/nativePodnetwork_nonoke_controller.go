@@ -23,22 +23,26 @@ import (
 	"time"
 
 	"go.uber.org/zap"
-	v1 "k8s.io/api/core/v1"
+
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/wait"
 
 	//"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/client-go/kubernetes"
 
 	//"k8s.io/client-go/util/workqueue"
 	//ctrl "sigs.k8s.io/controller-runtime"
 	npnv1beta1 "github.com/oracle/oci-cloud-controller-manager/api/v1beta1"
 	providercfg "github.com/oracle/oci-cloud-controller-manager/pkg/cloudprovider/providers/oci/config"
+	v1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
 
+	"k8s.io/client-go/tools/clientcmd"
 	//"github.com/oracle/oci-cloud-controller-manager/pkg/oci/client"
 	//	"sigs.k8s.io/controller-runtime/pkg/log"
 
@@ -173,13 +177,18 @@ func (r *NativePodNetworkNONOKEReconciler) Reconcile(ctx context.Context, reques
 	login := zap.L()
 
 	login.Info("Reconciling--------------------")
+	login.Info("Generating Kubernetes clientset")
+	kcs, err := NewK8sClient("https://129.146.114.63:6443", "/home/ayusver/.kube/ccm-csi-e2e-v22.kubeconfig")
 
-	nodeName, err := r.getNodeObjectInCluster(ctx, request.NamespacedName)
+	login.Error("error", zap.Error(err))
+	login.Info("Listing nodes")
+	nodeName, err := ListNodes(kcs)
+	login.Error("error", zap.Error(err))
 	if err != nil {
 		login.Error("error", zap.Error(err))
 		return reconcile.Result{}, err
 	}
-	login.Info(nodeName.Name)
+	login.Debug("nodes", zap.Any("list", nodeName))
 	login.Info("fetched info about node")
 	err = r.Get(ctx, request.NamespacedName, npn)
 	if err != nil {
@@ -225,7 +234,7 @@ func (r *NativePodNetworkNONOKEReconciler) Reconcile(ctx context.Context, reques
 				},
 			}
 			login.Info("creating npn1 for cr  on node ")
-			npn1.Name = nodeName.Name
+
 			login.Debug("npn1", zap.Any("config", npn1))
 			login.Info("Creating the NPN CR ")
 			err := r.Create(ctx, npn1)
@@ -241,4 +250,27 @@ func (r *NativePodNetworkNONOKEReconciler) Reconcile(ctx context.Context, reques
 	login.Info("npn present on node")
 
 	return reconcile.Result{}, err
+}
+func ListNodes(clientset kubernetes.Interface) ([]v1.Node, error) {
+	nodes, err := clientset.CoreV1().Nodes().List(context.TODO(), metav1.ListOptions{})
+	login := zap.L()
+
+	if err != nil {
+		login.Error("error", zap.Error(err))
+		return nil, err
+
+	}
+	login.Debug("nodes", zap.Any("list", nodes.Items))
+
+	return nodes.Items, nil
+}
+func NewK8sClient(masterUrl, kubeconfigPath string) (kubernetes.Interface, error) {
+	// use the current context in kubeconfig
+	config, err := clientcmd.BuildConfigFromFlags(masterUrl, kubeconfigPath)
+	if err != nil {
+		return nil, err
+	}
+
+	// create the clientset
+	return kubernetes.NewForConfig(config)
 }
