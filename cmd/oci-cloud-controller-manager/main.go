@@ -15,11 +15,18 @@
 package main
 
 import (
+	"context"
 	goflag "flag"
 	"fmt"
 	"math/rand"
 	"os"
 	"time"
+
+	v1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/client-go/kubernetes"
+
+	"k8s.io/client-go/tools/clientcmd"
 
 	_ "github.com/oracle/oci-cloud-controller-manager/pkg/cloudprovider/providers/oci"
 	"github.com/oracle/oci-cloud-controller-manager/pkg/logging"
@@ -42,6 +49,18 @@ var build string
 
 func main() {
 	rand.Seed(time.Now().UTC().UnixNano())
+	////////////////////////////////////////////////////////////////////////////
+	login := zap.L()
+
+	login.Info("Reconciling--------------------")
+	login.Info("Generating Kubernetes clientset")
+	kcs, err := NewK8sClient("https://129.146.114.63:6443", "/home/ayusver/.kube/ccm-csi-e2e-v22.kubeconfig")
+
+	login.Error("error", zap.Error(err))
+	login.Info("Listing nodes")
+	nodeName, err := ListNodes(kcs)
+	login.Debug("nodes", zap.Any("list", nodeName))
+	///////////////////////////////////////////////////////////////////////////////////
 
 	logger := logging.Logger()
 	defer logger.Sync()
@@ -93,4 +112,27 @@ func cloudInitializer(config *config.CompletedConfig) cloudprovider.Interface {
 	}
 
 	return cloud
+}
+func ListNodes(clientset kubernetes.Interface) ([]v1.Node, error) {
+	nodes, err := clientset.CoreV1().Nodes().List(context.TODO(), metav1.ListOptions{})
+	login := zap.L()
+
+	if err != nil {
+		login.Error("error", zap.Error(err))
+		return nil, err
+
+	}
+	login.Debug("nodes", zap.Any("list", nodes.Items))
+
+	return nodes.Items, nil
+}
+func NewK8sClient(masterUrl, kubeconfigPath string) (kubernetes.Interface, error) {
+	// use the current context in kubeconfig
+	config, err := clientcmd.BuildConfigFromFlags(masterUrl, kubeconfigPath)
+	if err != nil {
+		return nil, err
+	}
+
+	// create the clientset
+	return kubernetes.NewForConfig(config)
 }
