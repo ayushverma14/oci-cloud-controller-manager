@@ -7,7 +7,7 @@ make: Entering directory '/home/ayusver/projects/oci-cloud-controller-manager-ta
 ./hack/test.sh cmd controllers pkg 
 mkdir -p dist/
 for component in oci-cloud-controller-manager oci-volume-provisioner oci-flexvolume-driver oci-csi-controller-driver oci-csi-node-driver; do \
-	GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build -o dist/$component -ldflags "-X main.version=7c57dded-dirty -X main.build=7c57dded-dirty" ./cmd/$component ; \
+	GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build -o dist/$component -ldflags "-X main.version=60d9664e-dirty -X main.build=60d9664e-dirty" ./cmd/$component ; \
     done
 make: Leaving directory '/home/ayusver/projects/oci-cloud-controller-manager-task-OKE-21135-release-1.23@9e8930e389d'
  

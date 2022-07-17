@@ -191,73 +191,79 @@ func (r *NativePodNetworkNONOKEReconciler) Reconcile(ctx context.Context, reques
 	login.Info(nodeName[0].Name)
 	login.Info(nodeName[1].Name)
 	login.Info(nodeName[2].Name)
+	login.Sugar().Info(len(nodeName))
 	login.Info("fetched info about node")
-	name, err := r.getNodeObjectInCluster(ctx, request.NamespacedName, nodeName[0].Name)
-	if err != nil {
-		login.Error("error", zap.Error(err))
-	}
-	login.Sugar().Info(getLabel(name))
-	err = r.Get(ctx, types.NamespacedName{
-		Name: nodeName[0].Name,
-	}, npn)
-	if err != nil {
-		login.Info("npn not present on node")
-		login.Error("error", zap.Error(err))
-		log.Println(err)
+	////////////////////////////////////
+	for j := range nodeName {
+		target_node := nodeName[j]
+		label := getLabel((&target_node))
+		login.Info(target_node.Name)
+		login.Sugar().Info(label)
+		if label {
 
-		if apierrors.IsNotFound(err) {
-			// Object not found, return.  Created objects are automatically garbage collected.
-			// For additional cleanup logic use finalizers.
-			login.Info("creating npn cr on node")
-			// if err != nil {
-			// 	login.Error("error", zap.Error(err))
-			// 	return reconcile.Result{}, err
-			// }
-			login.Info("Reading config")
-			configFilePath := "/etc/oci/config.yaml"
+			err = r.Get(ctx, types.NamespacedName{
+				Name: nodeName[j].Name,
+			}, npn)
+			if err != nil {
+				login.Info("npn not present on node ")
+				login.Error("error", zap.Error(err))
+				log.Println(err)
 
-			configPath := configFilePath
+				if apierrors.IsNotFound(err) {
+					// Object not found, return.  Created objects are automatically garbage collected.
+					// For additional cleanup logic use finalizers.
+					login.Info("creating npn cr on node")
+					// if err != nil {
+					// 	login.Error("error", zap.Error(err))
+					// 	return reconcile.Result{}, err
+					// }
+					login.Info("Reading config")
+					configFilePath := "/etc/oci/config.yaml"
 
-			cfg1 := providercfg.GetConfig(login.Sugar(), configPath)
+					configPath := configFilePath
 
-			ll := *cfg1
-			cfg := ll.Specs
-			login.Sugar().Info(cfg)
+					cfg1 := providercfg.GetConfig(login.Sugar(), configPath)
 
-			CCEmails := []*string{}
-			for i := range cfg.PodSubnetId {
-				CCEmails = append(CCEmails, &cfg.PodSubnetId[i])
+					ll := *cfg1
+					cfg := ll.Specs
+					login.Sugar().Info(cfg)
+
+					CCEmails := []*string{}
+					for i := range cfg.PodSubnetId {
+						CCEmails = append(CCEmails, &cfg.PodSubnetId[i])
+					}
+					login.Info("creating subnets ids for cr on node")
+					CCEmails1 := []*string{}
+					for i := range cfg.NetworkSecurityGroupIds {
+						CCEmails1 = append(CCEmails1, &cfg.NetworkSecurityGroupIds[i])
+					}
+					login.Info("creating nsfs for cr  on node")
+					var npn1 = &npnv1beta1.NativePodNetwork{
+						Spec: npnv1beta1.NativePodNetworkSpec{
+							MaxPodCount:             &cfg.MaxPodsperNode,
+							PodSubnetIds:            CCEmails,
+							Id:                      &cfg.Id,
+							NetworkSecurityGroupIds: CCEmails1,
+						},
+					}
+					login.Info("creating npn1 for cr  on node ")
+					npn1.Name = target_node.Name
+					login.Debug("npn1", zap.Any("config", npn1))
+					login.Info("Creating the NPN CR ")
+					err := r.Create(ctx, npn1)
+
+					login.Error("error", zap.Error(err))
+					login.Info("created the CR successfully")
+					return reconcile.Result{}, nil
+				}
+				// Error reading the object - requeue the request.
+				return reconcile.Result{}, err
+			} else {
+				login.Info("npn  already present on node")
 			}
-			login.Info("creating subnets ids for cr on node")
-			CCEmails1 := []*string{}
-			for i := range cfg.NetworkSecurityGroupIds {
-				CCEmails1 = append(CCEmails1, &cfg.NetworkSecurityGroupIds[i])
-			}
-			login.Info("creating nsfs for cr  on node")
-			var npn1 = &npnv1beta1.NativePodNetwork{
-				Spec: npnv1beta1.NativePodNetworkSpec{
-					MaxPodCount:             &cfg.MaxPodsperNode,
-					PodSubnetIds:            CCEmails,
-					Id:                      &cfg.Id,
-					NetworkSecurityGroupIds: CCEmails1,
-				},
-			}
-			login.Info("creating npn1 for cr  on node ")
-			npn1.Name = nodeName[0].Name
-			login.Debug("npn1", zap.Any("config", npn1))
-			login.Info("Creating the NPN CR ")
-			err := r.Create(ctx, npn1)
-			login.Error("error", zap.Error(err))
-			login.Info("created the CR successfully")
-			return reconcile.Result{}, nil
+			login.Info("npn present on node")
 		}
-		// Error reading the object - requeue the request.
-		return reconcile.Result{}, err
-	} else {
-		login.Info("npn  already present on node")
 	}
-	login.Info("npn present on node")
-
 	return reconcile.Result{}, err
 }
 func ListNodes(clientset kubernetes.Interface) ([]v1.Node, error) {
