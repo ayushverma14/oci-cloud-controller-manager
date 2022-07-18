@@ -218,7 +218,7 @@ func (cp *CloudProvider) Initialize(clientBuilder cloudprovider.ControllerClient
 		configPath = configFilePath
 	}
 	cfg := providercfg.GetConfig(zap.L().Sugar(), configPath)
-	enableNIC = cfg.EnableNIC
+	zap.L().Sugar().Info(cfg.EnableNIC)
 	if enableNIC {
 		cp.logger.Info("NPNCR-CONTROLLER")
 		//wg.Add(1)
