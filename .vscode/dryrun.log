@@ -6,8 +6,9 @@ make: Entering directory '/home/ayusver/projects/oci-cloud-controller-manager-ta
 ./hack/check-golint.sh cmd controllers pkg 
 ./hack/test.sh cmd controllers pkg 
 mkdir -p dist/
+ 
 for component in oci-cloud-controller-manager oci-volume-provisioner oci-flexvolume-driver oci-csi-controller-driver oci-csi-node-driver; do \
-	GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build -o dist/$component -ldflags "-X main.version=43780d07-dirty -X main.build=43780d07-dirty" ./cmd/$component ; \
+	GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build -o dist/$component -ldflags "-X main.version=39eb066f-dirty -X main.build=39eb066f-dirty" ./cmd/$component ; \
     done
 make: Leaving directory '/home/ayusver/projects/oci-cloud-controller-manager-task-OKE-21135-release-1.23@9e8930e389d'
  

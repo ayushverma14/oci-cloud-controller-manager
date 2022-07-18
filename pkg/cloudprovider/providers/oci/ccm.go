@@ -209,10 +209,19 @@ func (cp *CloudProvider) Initialize(clientBuilder cloudprovider.ControllerClient
 		}
 		return newSecurityListManager(cp.logger, cp.client, serviceInformer, cp.config.LoadBalancer.SecurityLists, mode)
 	}
-	//var logger *zap.SugaredLogger
+
 	var wg sync.WaitGroup
 	enableNIC := true
 	cp.logger.Info("Reached the npn controller to start")
+	configPath, ok := os.LookupEnv("CONFIG_YAML_FILENAME")
+	if !ok {
+		configPath = configFilePath
+	}
+	cfg := providercfg.GetConfig(zap.L().Sugar(), configPath)
+
+	//using enableNIC value set up in the config.yml by the customer
+	enableNIC = cfg.EnableNIC
+
 	if enableNIC {
 		cp.logger.Info("NPNCR-CONTROLLER")
 		//wg.Add(1)
@@ -245,26 +254,6 @@ func (cp *CloudProvider) Initialize(clientBuilder cloudprovider.ControllerClient
 		}
 
 		cp.logger.Info("npncr controller setup properly")
-		//////////		///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-		// if err := mgr.AddHealthzCheck("healthz", healthz.Ping); err != nil {
-		// 	cp.logger.Error(err, "unable to set up health check")
-		// 	os.Exit(1)
-		// }
-		// cp.logger.Info("health checkupy")
-		// if err := mgr.AddReadyzCheck("readyz", healthz.Ping); err != nil {
-		// 	cp.logger.Error(err, "unable to set up ready check")
-		// 	os.Exit(1)
-		// }
-		// cp.logger.Info(" manager ready")
-		// cp.logger.Info("starting manager")
-		// if err := mgr.Start(ctrl.SetupSignalHandler()); err != nil {
-		// 	cp.logger.Error(err, "problem running manager")
-		// 	// TODO: Handle the case of NPN controller not running more gracefully
-		// 	os.Exit(1)
-		// }
-		////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-		//Setting up Existing Controller
 
 		wg.Add(1)
 		logger := cp.logger.With(zap.String("component", "npn-controller"))
@@ -279,7 +268,7 @@ func (cp *CloudProvider) Initialize(clientBuilder cloudprovider.ControllerClient
 			}
 			cfg := providercfg.GetConfig(logger, configPath)
 			ociClient := getOCIClient(logger, cfg)
-			cp.logger.Info((cfg))
+
 			metricPusher, err := metrics.NewMetricPusher(logger)
 			if err != nil {
 				cp.logger.With("error", err).Error("metrics collection could not be enabled")
