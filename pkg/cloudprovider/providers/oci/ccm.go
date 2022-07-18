@@ -213,6 +213,12 @@ func (cp *CloudProvider) Initialize(clientBuilder cloudprovider.ControllerClient
 	var wg sync.WaitGroup
 	enableNIC := true
 	cp.logger.Info("Reached the npn controller to start")
+	configPath, ok := os.LookupEnv("CONFIG_YAML_FILENAME")
+	if !ok {
+		configPath = configFilePath
+	}
+	cfg := providercfg.GetConfig(zap.L().Sugar(), configPath)
+	enableNIC = cfg.EnableNIC
 	if enableNIC {
 		cp.logger.Info("NPNCR-CONTROLLER")
 		//wg.Add(1)
@@ -245,26 +251,6 @@ func (cp *CloudProvider) Initialize(clientBuilder cloudprovider.ControllerClient
 		}
 
 		cp.logger.Info("npncr controller setup properly")
-		//////////		///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-		// if err := mgr.AddHealthzCheck("healthz", healthz.Ping); err != nil {
-		// 	cp.logger.Error(err, "unable to set up health check")
-		// 	os.Exit(1)
-		// }
-		// cp.logger.Info("health checkupy")
-		// if err := mgr.AddReadyzCheck("readyz", healthz.Ping); err != nil {
-		// 	cp.logger.Error(err, "unable to set up ready check")
-		// 	os.Exit(1)
-		// }
-		// cp.logger.Info(" manager ready")
-		// cp.logger.Info("starting manager")
-		// if err := mgr.Start(ctrl.SetupSignalHandler()); err != nil {
-		// 	cp.logger.Error(err, "problem running manager")
-		// 	// TODO: Handle the case of NPN controller not running more gracefully
-		// 	os.Exit(1)
-		// }
-		////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-		//Setting up Existing Controller
 
 		wg.Add(1)
 		logger := cp.logger.With(zap.String("component", "npn-controller"))
