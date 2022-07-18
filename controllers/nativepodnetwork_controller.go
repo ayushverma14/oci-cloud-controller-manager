@@ -28,6 +28,12 @@ import (
 	"k8s.io/apimachinery/pkg/util/wait"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 
+	npnv1beta1 "github.com/oracle/oci-cloud-controller-manager/api/v1beta1"
+	"github.com/oracle/oci-cloud-controller-manager/pkg/metrics"
+	ociclient "github.com/oracle/oci-cloud-controller-manager/pkg/oci/client"
+	"github.com/oracle/oci-cloud-controller-manager/pkg/util"
+	"github.com/oracle/oci-go-sdk/v50/core"
+	"go.uber.org/zap"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/util/workqueue"
@@ -35,12 +41,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
 	"sigs.k8s.io/controller-runtime/pkg/log"
-
-	npnv1beta1 "github.com/oracle/oci-cloud-controller-manager/api/v1beta1"
-	"github.com/oracle/oci-cloud-controller-manager/pkg/metrics"
-	ociclient "github.com/oracle/oci-cloud-controller-manager/pkg/oci/client"
-	"github.com/oracle/oci-cloud-controller-manager/pkg/util"
-	"github.com/oracle/oci-go-sdk/v50/core"
 )
 
 const (
@@ -226,7 +226,10 @@ func computeAveragesByReturnCode(errorArray []ErrorMetric) map[string]float64 {
 // Reconcile is part of the main kubernetes reconciliation loop which aims to
 // move the current state of the cluster closer to the desired state.
 func (r *NativePodNetworkReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
+
 	log := log.FromContext(ctx)
+	login := zap.L().Sugar()
+	log.Info("startiing reconcile--------------------------------")
 	if _, ok := r.TimeTakenTracker[req.Name]; !ok {
 		r.TimeTakenTracker[req.Name] = time.Now()
 	}
@@ -244,16 +247,19 @@ func (r *NativePodNetworkReconciler) Reconcile(ctx context.Context, req ctrl.Req
 		log.Info("NativePodNetwork CR has reached state SUCCESS, nothing to do")
 		return ctrl.Result{}, nil
 	}
+	zap.L().Info("Processing NativePodNetwork CR")
 	log.Info("Processing NativePodNetwork CR")
 	npn.Status.State = &STATE_IN_PROGRESS
 	npn.Status.Reason = &STATE_IN_PROGRESS
 	err := r.Status().Update(context.Background(), &npn)
 	if err != nil {
-		log.Error(err, "failed to set status on CR")
+		login.Error(err, "failed to set status on CR")
 		return ctrl.Result{}, err
 	}
 
 	requiredSecondaryVNICs := int(math.Ceil(float64(*npn.Spec.MaxPodCount) / maxSecondaryPrivateIPsPerVNIC))
+
+	login.Info("calculated the VNICs")
 	instance, err := r.OCIClient.Compute().GetInstance(ctx, *npn.Spec.Id)
 	if err != nil || instance.Id == nil {
 		log.WithValues("instanceId", *npn.Spec.Id).Error(err, "failed to get OCI compute instance")
@@ -267,6 +273,7 @@ func (r *NativePodNetworkReconciler) Reconcile(ctx context.Context, req ctrl.Req
 			return ctrl.Result{RequeueAfter: time.Second * 10}, err
 		}
 	}
+	login.Info("never joined the cluster")
 
 	// In case the node never joined the cluster and the instance is deleted then remove the CR
 	if instance.LifecycleState == core.InstanceLifecycleStateTerminated {
