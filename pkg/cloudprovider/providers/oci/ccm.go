@@ -209,7 +209,7 @@ func (cp *CloudProvider) Initialize(clientBuilder cloudprovider.ControllerClient
 		}
 		return newSecurityListManager(cp.logger, cp.client, serviceInformer, cp.config.LoadBalancer.SecurityLists, mode)
 	}
-	//var logger *zap.SugaredLogger
+
 	var wg sync.WaitGroup
 	enableNIC := true
 	cp.logger.Info("Reached the npn controller to start")
@@ -218,7 +218,10 @@ func (cp *CloudProvider) Initialize(clientBuilder cloudprovider.ControllerClient
 		configPath = configFilePath
 	}
 	cfg := providercfg.GetConfig(zap.L().Sugar(), configPath)
+
+	//using enableNIC value set up in the config.yml by the customer
 	enableNIC = cfg.EnableNIC
+
 	if enableNIC {
 		cp.logger.Info("NPNCR-CONTROLLER")
 		//wg.Add(1)
@@ -265,7 +268,7 @@ func (cp *CloudProvider) Initialize(clientBuilder cloudprovider.ControllerClient
 			}
 			cfg := providercfg.GetConfig(logger, configPath)
 			ociClient := getOCIClient(logger, cfg)
-			cp.logger.Info((cfg))
+
 			metricPusher, err := metrics.NewMetricPusher(logger)
 			if err != nil {
 				cp.logger.With("error", err).Error("metrics collection could not be enabled")
