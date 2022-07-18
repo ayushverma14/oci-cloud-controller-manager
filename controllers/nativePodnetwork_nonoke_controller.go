@@ -205,14 +205,14 @@ func (r *NativePodNetworkNONOKEReconciler) Reconcile(ctx context.Context, reques
 				Name: nodeName[j].Name,
 			}, npn)
 			if err != nil {
-				login.Info("npn not present on node ")
+				login.Sugar().Infof("npn not present on node: %+v ",nodeName[j].Name)
 				login.Error("error", zap.Error(err))
 				log.Println(err)
 
 				if apierrors.IsNotFound(err) {
 					// Object not found, return.  Created objects are automatically garbage collected.
 					// For additional cleanup logic use finalizers.
-					login.Info("creating npn cr on node")
+					login.Sugar().Infof("creating npn cr on node: %+v",nodeName[j].Name)
 					// if err != nil {
 					// 	login.Error("error", zap.Error(err))
 					// 	return reconcile.Result{}, err
@@ -249,7 +249,7 @@ func (r *NativePodNetworkNONOKEReconciler) Reconcile(ctx context.Context, reques
 					login.Info("creating npn1 for cr  on node ")
 					npn1.Name = target_node.Name
 					login.Debug("npn1", zap.Any("config", npn1))
-					login.Info("Creating the NPN CR ")
+					login.Sugar().Infof("Creating the NPN CR : +%v",nodeName[j].Name)
 					err := r.Create(ctx, npn1)
 
 					login.Error("error", zap.Error(err))
@@ -259,7 +259,7 @@ func (r *NativePodNetworkNONOKEReconciler) Reconcile(ctx context.Context, reques
 				// Error reading the object - requeue the request.
 				return reconcile.Result{}, err
 			} else {
-				login.Info("npn  already present on node")
+				login.Sugar().Infof("npn  already present on node:%+v",nodeName[j].Name)
 			}
 			login.Info("npn present on node")
 		}
