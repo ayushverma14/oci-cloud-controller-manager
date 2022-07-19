@@ -262,7 +262,7 @@ func (r *NativePodNetworkReconciler) Reconcile(ctx context.Context, req ctrl.Req
 	login.Info("calculated the VNICs")
 	instance, err := r.OCIClient.Compute().GetInstance(ctx, *npn.Spec.Id)
 	if err != nil || instance.Id == nil {
-		login.Error(err,"failed to get OCI compute instance")
+		login.Error(err, "failed to get OCI compute instance")
 		log.WithValues("instanceId", *npn.Spec.Id).Error(err, "failed to get OCI compute instance")
 		return ctrl.Result{}, err
 	}
@@ -280,13 +280,13 @@ func (r *NativePodNetworkReconciler) Reconcile(ctx context.Context, req ctrl.Req
 	if instance.LifecycleState == core.InstanceLifecycleStateTerminated {
 		err = r.Client.Delete(ctx, &npn)
 		if err != nil {
-			log.Error(err, "failed to delete NPN CR for terminated instance")
+			login.Error(err, "failed to delete NPN CR for terminated instance")
 			return ctrl.Result{}, client.IgnoreNotFound(err)
 		}
-		log.Info("Deleted the CR for Terminated compute instance")
+		login.Info("Deleted the CR for Terminated compute instance")
 		return ctrl.Result{}, nil
 	}
-
+	login.Info("fetched the primaryVnic")
 	primaryVnic, existingSecondaryVNICs, err := r.getPrimaryAndSecondaryVNICs(ctx, *instance.CompartmentId, *instance.Id)
 	if err != nil {
 		r.handleError(ctx, req, err, "GetVNIC")
@@ -296,12 +296,16 @@ func (r *NativePodNetworkReconciler) Reconcile(ctx context.Context, req ctrl.Req
 		r.handleError(ctx, req, errPrimaryVnicNotFound, "GetPrimaryVNIC")
 		return ctrl.Result{}, errPrimaryVnicNotFound
 	}
-	nodeName := primaryVnic.PrivateIp
+	//nodeName := primaryVnic.PrivateIp
+
+	nodeName := npn.Name
+	login.Infof("required nodeName: %+v", nodeName)
 	log.WithValues("existingSecondaryVNICs", existingSecondaryVNICs).
 		WithValues("countOfExistingSecondaryVNICs", len(existingSecondaryVNICs)).
 		Info(FetchedExistingSecondaryVNICsForInstance)
 
 	existingSecondaryIpsbyVNIC, err := r.getSecondaryPrivateIpsByVNICs(ctx, existingSecondaryVNICs)
+	login.Info("fetched the SecondaryVnic")
 	if err != nil {
 		r.handleError(ctx, req, err, "ListPrivateIP")
 		return ctrl.Result{}, err
@@ -310,7 +314,7 @@ func (r *NativePodNetworkReconciler) Reconcile(ctx context.Context, req ctrl.Req
 	log.WithValues("countOfExistingSecondaryIps", totalAllocatedSecondaryIPs).Info("Fetched existingSecondaryIp for instance")
 
 	requiredAdditionalSecondaryVNICs := requiredSecondaryVNICs - len(existingSecondaryVNICs)
-
+	login.Info("fetched the requiredAdditionalVnics: %+v", requiredAdditionalSecondaryVNICs)
 	if requiredAdditionalSecondaryVNICs > 0 {
 		log.WithValues("requiredAdditionalSecondaryVNICs", requiredAdditionalSecondaryVNICs).Info("Need to allocate VNICs for instance")
 		additionalVNICAttachments := make([]VnicAttachmentResponse, requiredAdditionalSecondaryVNICs)
@@ -338,7 +342,7 @@ func (r *NativePodNetworkReconciler) Reconcile(ctx context.Context, req ctrl.Req
 		r.PushMetric(VnicAttachmentResponseSlice(additionalVNICAttachments).ErrorMetric())
 		log.WithValues("requiredAdditionalSecondaryVNICs", requiredAdditionalSecondaryVNICs).Info("Allocated the required VNICs for instance")
 	}
-
+	login.Info("allocated the requiredAdditionalVnics")
 	_, existingSecondaryVNICs, err = r.getPrimaryAndSecondaryVNICs(ctx, *instance.CompartmentId, *instance.Id)
 	if err != nil {
 		r.handleError(ctx, req, err, "GetVNIC")
@@ -350,10 +354,11 @@ func (r *NativePodNetworkReconciler) Reconcile(ctx context.Context, req ctrl.Req
 
 	existingSecondaryIpsbyVNIC, err = r.getSecondaryPrivateIpsByVNICs(ctx, existingSecondaryVNICs)
 	if err != nil {
+		login.Error(err, "list privateIP")
 		r.handleError(ctx, req, err, "ListPrivateIP")
 		return ctrl.Result{}, err
 	}
-
+	login.Info("allocated the requiredAdditionalVnics")
 	additionalIpsByVnic, err := getAdditionalSecondaryIPsNeededPerVNIC(existingSecondaryIpsbyVNIC, *npn.Spec.MaxPodCount-totalAllocatedSecondaryIPs)
 	if err != nil {
 		log.WithValues("additionalIpsRequired", *npn.Spec.MaxPodCount-totalAllocatedSecondaryIPs).Error(err, "failed to allocate the required IP addresses")
@@ -416,31 +421,31 @@ func (r *NativePodNetworkReconciler) Reconcile(ctx context.Context, req ctrl.Req
 	log.WithValues("secondaryIpsbyVNIC", existingSecondaryIpsbyVNIC).
 		WithValues("countOfExistingSecondaryIps", totalAllocatedSecondaryIPs).
 		Info("Fetched existingSecondaryIp for instance")
-
+	login.Info("Fetched existingSecondaryIp for instance")
 	updateNPN := npnv1beta1.NativePodNetwork{}
 	err = r.Get(context.TODO(), req.NamespacedName, &updateNPN)
 	if err != nil {
-		log.Error(err, "failed to get CR")
+		login.Error(err, "failed to get CR")
 		r.handleError(ctx, req, err, "GetCR")
 		return ctrl.Result{}, err
 	}
 
-	log.Info("Getting v1 Node object to set ownerref on CR")
+	login.Info("Getting v1 Node object to set ownerref on CR")
 	// Set OwnerRef on the CR and mark CR status as SUCCESS
-	nodeObject, err := r.getNodeObjectInCluster(ctx, req.NamespacedName, *nodeName)
+	nodeObject, err := r.getNodeObjectInCluster(ctx, req.NamespacedName, nodeName)
 	if err != nil {
 		r.handleError(ctx, req, err, "GetV1Node")
 		return ctrl.Result{}, err
 	}
 
 	if err = controllerutil.SetOwnerReference(nodeObject, &updateNPN, r.Scheme); err != nil {
-		log.Error(err, "failed to update owner ref on CR")
+		login.Error(err, "failed to update owner ref on CR")
 		return ctrl.Result{}, err
 	}
-	log.Info("Updating ownerref and CR status as COMPLETED")
+	login.Info("Updating ownerref and CR status as COMPLETED")
 	err = r.Client.Update(ctx, &updateNPN)
 	if err != nil {
-		log.Error(err, "failed to set ownerref on CR")
+		login.Error(err, "failed to set ownerref on CR")
 		return ctrl.Result{}, err
 	}
 
@@ -449,7 +454,7 @@ func (r *NativePodNetworkReconciler) Reconcile(ctx context.Context, req ctrl.Req
 	updateNPN.Status.VNICs = convertCoreVNICtoNPNStatus(existingSecondaryVNICs, existingSecondaryIpsbyVNIC)
 	err = r.Status().Update(ctx, &updateNPN)
 	if err != nil {
-		log.Error(err, "failed to set status on CR")
+		login.Error(err, "failed to set status on CR")
 		return ctrl.Result{}, err
 	}
 	r.PushMetric(endToEndLatencySlice{{time.Since(startTime).Seconds()}}.ErrorMetric())
