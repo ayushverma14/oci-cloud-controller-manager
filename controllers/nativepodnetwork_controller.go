@@ -262,6 +262,7 @@ func (r *NativePodNetworkReconciler) Reconcile(ctx context.Context, req ctrl.Req
 	login.Info("calculated the VNICs")
 	instance, err := r.OCIClient.Compute().GetInstance(ctx, *npn.Spec.Id)
 	if err != nil || instance.Id == nil {
+		login.Error(err,"failed to get OCI compute instance")
 		log.WithValues("instanceId", *npn.Spec.Id).Error(err, "failed to get OCI compute instance")
 		return ctrl.Result{}, err
 	}
