@@ -35,6 +35,11 @@ import (
 	//"k8s.io/client-go/util/workqueue"
 	//ctrl "sigs.k8s.io/controller-runtime"
 	npnv1beta1 "github.com/oracle/oci-cloud-controller-manager/api/v1beta1"
+
+	"strings"
+
+	"github.com/pkg/errors"
+
 	providercfg "github.com/oracle/oci-cloud-controller-manager/pkg/cloudprovider/providers/oci/config"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -68,6 +73,7 @@ spec:
   podSubnetIds: ["ocid1.subnet.oc1.iad.aaaaaaaame2kmeb2x3443s3kdcq27he2akbj67eijc3iar4l2atwnp5ttslq"]
   networkSecurityGroupIds: [ocid1.networksecuritygroup.oc1.iad.aaaaaaaa2ezkh44ul7yy2jioznmiydya4vcoedqxhpvhjjkl7a6rx2m267gq]
   `
+const providerPrefix = "oci://"
 
 var (
 	scheme *runtime.Scheme = runtime.NewScheme()
@@ -238,11 +244,16 @@ func (r *NativePodNetworkNONOKEReconciler) Reconcile(ctx context.Context, reques
 						CCEmails1 = append(CCEmails1, &cfg.NetworkSecurityGroupIds[i])
 					}
 					login.Info("creating nsfs for cr  on node")
+
+					idx, err := MapProviderIDToInstanceID(nodeName[j].Spec.ProviderID)
+					if err != nil {
+						login.Error("failure in mapping", zap.Error(err))
+					}
 					var npn1 = &npnv1beta1.NativePodNetwork{
 						Spec: npnv1beta1.NativePodNetworkSpec{
 							MaxPodCount:             &cfg.MaxPodsperNode,
 							PodSubnetIds:            CCEmails,
-							Id:                      &nodeName[j].Spec.ProviderID,
+							Id:                      &idx,
 							NetworkSecurityGroupIds: CCEmails1,
 						},
 					}
@@ -250,7 +261,7 @@ func (r *NativePodNetworkNONOKEReconciler) Reconcile(ctx context.Context, reques
 					npn1.Name = target_node.Name
 					login.Debug("npn1", zap.Any("config", npn1))
 					login.Sugar().Infof("Creating the NPN CR : +%v", nodeName[j].Name)
-					err := r.Create(ctx, npn1)
+					err = r.Create(ctx, npn1)
 
 					login.Error("error", zap.Error(err))
 					login.Info("created the CR successfully")
@@ -299,4 +310,13 @@ func getLabel(node *v1.Node) bool {
 	}
 
 	return false
+}
+func MapProviderIDToInstanceID(providerID string) (string, error) {
+	if providerID == "" {
+		return providerID, errors.New("provider ID is empty")
+	}
+	if strings.HasPrefix(providerID, providerPrefix) {
+		return strings.TrimPrefix(providerID, providerPrefix), nil
+	}
+	return providerID, nil
 }
