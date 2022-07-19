@@ -457,6 +457,7 @@ func (r *NativePodNetworkReconciler) Reconcile(ctx context.Context, req ctrl.Req
 
 // SetupWithManager sets up the controller with the Manager.
 func (r *NativePodNetworkReconciler) SetupWithManager(mgr ctrl.Manager) error {
+	zap.L().Sugar().Info("Setting up wth manager")
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&npnv1beta1.NativePodNetwork{}).
 		WithOptions(controller.Options{MaxConcurrentReconciles: 20, CacheSyncTimeout: time.Hour}).

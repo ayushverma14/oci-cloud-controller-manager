@@ -215,7 +215,7 @@ func (cp *CloudProvider) Initialize(clientBuilder cloudprovider.ControllerClient
 	cp.logger.Info("Reached the npn controller to start")
 	if enableNIC {
 		cp.logger.Info("NPNCR-CONTROLLER")
-		//wg.Add(1)
+		wg.Add(1)
 		// logger = logger.With(zap.String("component", "npncr-controller"))
 		// ctrl.SetLogger(zapr.NewLogger(logger.Desugar()))
 		cp.logger.Info("NPN_CR controller is enabled.")
@@ -245,7 +245,7 @@ func (cp *CloudProvider) Initialize(clientBuilder cloudprovider.ControllerClient
 		}
 
 		cp.logger.Info("npncr controller setup properly")
-		//////////		///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+		/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 		// if err := mgr.AddHealthzCheck("healthz", healthz.Ping); err != nil {
 		// 	cp.logger.Error(err, "unable to set up health check")
 		// 	os.Exit(1)
@@ -269,7 +269,7 @@ func (cp *CloudProvider) Initialize(clientBuilder cloudprovider.ControllerClient
 		wg.Add(1)
 		logger := cp.logger.With(zap.String("component", "npn-controller"))
 		//ctrl.SetLogger(zapr.NewLogger(logger.Desugar()))
-		cp.logger.Info("NPN controller is enabled.")
+		logger.Info("NPN controller is enabled.")
 		go func() {
 			defer wg.Done()
 
