@@ -261,6 +261,16 @@ func (c *Config) Complete() {
 			c.RegionKey = meta.Region
 		}
 	}
+	if c.Specs.MaxPodsperNode <= 0 || c.Specs.MaxPodsperNode >= 110 {
+		zap.S().Warn("Pod count must be from 1 and 110")
+		c.Specs.MaxPodsperNode = 31
+		return
+	}
+
+	if len(c.Specs.Id) == 0 {
+		zap.S().Warn("Pod Subnet Id must not be emoty")
+		return
+	}
 
 }
 
