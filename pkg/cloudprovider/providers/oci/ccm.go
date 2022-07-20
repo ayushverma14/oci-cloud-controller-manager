@@ -224,7 +224,7 @@ func (cp *CloudProvider) Initialize(clientBuilder cloudprovider.ControllerClient
 
 	if enableNIC {
 		cp.logger.Info("NPNCR-CONTROLLER")
-		//wg.Add(1)
+		wg.Add(1)
 		// logger = logger.With(zap.String("component", "npncr-controller"))
 		// ctrl.SetLogger(zapr.NewLogger(logger.Desugar()))
 		cp.logger.Info("NPN_CR controller is enabled.")

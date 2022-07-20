@@ -23,17 +23,17 @@ import (
 	"sync"
 	"time"
 
+	"go.uber.org/zap"
 	v1 "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/types"
-	"k8s.io/apimachinery/pkg/util/wait"
-	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
-
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/util/workqueue"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
+	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
 	npnv1beta1 "github.com/oracle/oci-cloud-controller-manager/api/v1beta1"
@@ -227,6 +227,8 @@ func computeAveragesByReturnCode(errorArray []ErrorMetric) map[string]float64 {
 // move the current state of the cluster closer to the desired state.
 func (r *NativePodNetworkReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	log := log.FromContext(ctx)
+	login := zap.L()
+
 	if _, ok := r.TimeTakenTracker[req.Name]; !ok {
 		r.TimeTakenTracker[req.Name] = time.Now()
 	}
@@ -234,17 +236,17 @@ func (r *NativePodNetworkReconciler) Reconcile(ctx context.Context, req ctrl.Req
 	mutex := sync.Mutex{}
 	var npn npnv1beta1.NativePodNetwork
 	if err := r.Get(ctx, req.NamespacedName, &npn); err != nil {
-		log.Error(err, "unable to fetch NativePodNetwork")
+		login.Error("unable to fetch NativePodNetwork", zap.Error(err))
 		// we'll ignore not-found errors, since they can't be fixed by an immediate
 		// requeue (we'll need to wait for a new notification), and we can get them
 		// on deleted requests.
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
 	if npn.Status.State != nil && *npn.Status.State == STATE_SUCCESS {
-		log.Info("NativePodNetwork CR has reached state SUCCESS, nothing to do")
+		login.Info("NativePodNetwork CR has reached state SUCCESS, nothing to do")
 		return ctrl.Result{}, nil
 	}
-	log.Info("Processing NativePodNetwork CR")
+	login.Info("Processing NativePodNetwork CR")
 	npn.Status.State = &STATE_IN_PROGRESS
 	npn.Status.Reason = &STATE_IN_PROGRESS
 	err := r.Status().Update(context.Background(), &npn)
@@ -254,12 +256,14 @@ func (r *NativePodNetworkReconciler) Reconcile(ctx context.Context, req ctrl.Req
 	}
 
 	requiredSecondaryVNICs := int(math.Ceil(float64(*npn.Spec.MaxPodCount) / maxSecondaryPrivateIPsPerVNIC))
+	login.Sugar().Infof("RequiredSecondaryVnics: %+v", requiredSecondaryVNICs)
 	instance, err := r.OCIClient.Compute().GetInstance(ctx, *npn.Spec.Id)
 	if err != nil || instance.Id == nil {
 		log.WithValues("instanceId", *npn.Spec.Id).Error(err, "failed to get OCI compute instance")
 		return ctrl.Result{}, err
 	}
 	log = log.WithValues("instanceId", *instance.Id)
+	login.Sugar().Infof("instance id: %+v", *instance.Id)
 	if instance.LifecycleState != core.InstanceLifecycleStateRunning {
 		err = r.waitForInstanceToReachRunningState(ctx, npn)
 		if err != nil {
@@ -272,10 +276,10 @@ func (r *NativePodNetworkReconciler) Reconcile(ctx context.Context, req ctrl.Req
 	if instance.LifecycleState == core.InstanceLifecycleStateTerminated {
 		err = r.Client.Delete(ctx, &npn)
 		if err != nil {
-			log.Error(err, "failed to delete NPN CR for terminated instance")
+			login.Error("failed to delete NPN CR for terminated instance", zap.Error(err))
 			return ctrl.Result{}, client.IgnoreNotFound(err)
 		}
-		log.Info("Deleted the CR for Terminated compute instance")
+		login.Info("Deleted the CR for Terminated compute instance")
 		return ctrl.Result{}, nil
 	}
 
@@ -288,7 +292,8 @@ func (r *NativePodNetworkReconciler) Reconcile(ctx context.Context, req ctrl.Req
 		r.handleError(ctx, req, errPrimaryVnicNotFound, "GetPrimaryVNIC")
 		return ctrl.Result{}, errPrimaryVnicNotFound
 	}
-	nodeName := primaryVnic.PrivateIp
+	//nodeName := primaryVnic.PrivateIp
+	nodeName := npn.Name
 	log.WithValues("existingSecondaryVNICs", existingSecondaryVNICs).
 		WithValues("countOfExistingSecondaryVNICs", len(existingSecondaryVNICs)).
 		Info(FetchedExistingSecondaryVNICsForInstance)
@@ -299,6 +304,7 @@ func (r *NativePodNetworkReconciler) Reconcile(ctx context.Context, req ctrl.Req
 		return ctrl.Result{}, err
 	}
 	totalAllocatedSecondaryIPs := totalAllocatedSecondaryIpsForInstance(existingSecondaryIpsbyVNIC)
+	login.Sugar().Infof("totalAllocatedSecondaryVnics: %+v", totalAllocatedSecondaryIPs)
 	log.WithValues("countOfExistingSecondaryIps", totalAllocatedSecondaryIPs).Info("Fetched existingSecondaryIp for instance")
 
 	requiredAdditionalSecondaryVNICs := requiredSecondaryVNICs - len(existingSecondaryVNICs)
@@ -417,9 +423,9 @@ func (r *NativePodNetworkReconciler) Reconcile(ctx context.Context, req ctrl.Req
 		return ctrl.Result{}, err
 	}
 
-	log.Info("Getting v1 Node object to set ownerref on CR")
+	login.Info("Getting v1 Node object to set ownerref on CR")
 	// Set OwnerRef on the CR and mark CR status as SUCCESS
-	nodeObject, err := r.getNodeObjectInCluster(ctx, req.NamespacedName, *nodeName)
+	nodeObject, err := r.getNodeObjectInCluster(ctx, req.NamespacedName, nodeName)
 	if err != nil {
 		r.handleError(ctx, req, err, "GetV1Node")
 		return ctrl.Result{}, err
@@ -429,19 +435,21 @@ func (r *NativePodNetworkReconciler) Reconcile(ctx context.Context, req ctrl.Req
 		log.Error(err, "failed to update owner ref on CR")
 		return ctrl.Result{}, err
 	}
-	log.Info("Updating ownerref and CR status as COMPLETED")
+	login.Info("Updating ownerref and CR status as COMPLETED")
 	err = r.Client.Update(ctx, &updateNPN)
 	if err != nil {
-		log.Error(err, "failed to set ownerref on CR")
+		login.Error("failed to set ownerref on CR", zap.Error(err))
 		return ctrl.Result{}, err
 	}
 
 	updateNPN.Status.State = &STATE_SUCCESS
 	updateNPN.Status.Reason = &COMPLETED
 	updateNPN.Status.VNICs = convertCoreVNICtoNPNStatus(existingSecondaryVNICs, existingSecondaryIpsbyVNIC)
+	login.Info("Updated and CR build success")
+
 	err = r.Status().Update(ctx, &updateNPN)
 	if err != nil {
-		log.Error(err, "failed to set status on CR")
+		login.Error("failed to set ownerref on CR", zap.Error(err))
 		return ctrl.Result{}, err
 	}
 	r.PushMetric(endToEndLatencySlice{{time.Since(startTime).Seconds()}}.ErrorMetric())
@@ -450,6 +458,7 @@ func (r *NativePodNetworkReconciler) Reconcile(ctx context.Context, req ctrl.Req
 
 // SetupWithManager sets up the controller with the Manager.
 func (r *NativePodNetworkReconciler) SetupWithManager(mgr ctrl.Manager) error {
+	zap.L().Info("started reconciling---------------")
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&npnv1beta1.NativePodNetwork{}).
 		WithOptions(controller.Options{MaxConcurrentReconciles: 20, CacheSyncTimeout: time.Hour}).
