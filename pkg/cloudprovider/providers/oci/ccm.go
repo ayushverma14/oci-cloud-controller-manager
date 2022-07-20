@@ -227,11 +227,15 @@ func (cp *CloudProvider) Initialize(clientBuilder cloudprovider.ControllerClient
 		utilruntime.Must(clientgoscheme.AddToScheme(schemes))
 		utilruntime.Must(npnv1beta1.AddToScheme(schemes))
 		var kubClient clientset.Interface
+		cp.logger.Info("event recorder setting up ")
 		eveBroadCaster := record.NewBroadcaster()
+		cp.logger.Info("event recorder setting up 2")
 		eveBroadCaster.StartStructuredLogging(0)
+		cp.logger.Info("event recorder setting up 3")
 		eveBroadCaster.StartRecordingToSink(&typedcorev1.EventSinkImpl{
 			Interface: kubClient.CoreV1().Events(""),
 		})
+		cp.logger.Info("event recorder setting up 4")
 		recorder := eveBroadCaster.NewRecorder(schemes, corev1.EventSource{Component: "NPN_CR"})
 		cp.logger.Info("event recorder set up successfully")
 		mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), ctrl.Options{
