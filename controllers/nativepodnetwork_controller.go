@@ -34,6 +34,7 @@ import (
 	"github.com/oracle/oci-cloud-controller-manager/pkg/util"
 	"github.com/oracle/oci-go-sdk/v50/core"
 	"go.uber.org/zap"
+
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -225,7 +226,7 @@ func computeAveragesByReturnCode(errorArray []ErrorMetric) map[string]float64 {
 //+kubebuilder:rbac:groups=oci.oraclecloud.com,resources=nativepodnetworkings,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups=oci.oraclecloud.com,resources=nativepodnetworkings/status,verbs=get;update;patch
 //+kubebuilder:rbac:groups=oci.oraclecloud.com,resources=nativepodnetworkings/finalizers,verbs=update
-
+//+kubebuilder:rbac:groups=oci.oraclecloud.com,resources=events,verbs=create;patch
 // Reconcile is part of the main kubernetes reconciliation loop which aims to
 // move the current state of the cluster closer to the desired state.
 func (r *NativePodNetworkReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
@@ -473,6 +474,9 @@ func (r *NativePodNetworkReconciler) Reconcile(ctx context.Context, req ctrl.Req
 // SetupWithManager sets up the controller with the Manager.
 func (r *NativePodNetworkReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	zap.L().Sugar().Info("Setting up wth manager")
+	r.Recorder = mgr.GetEventRecorderFor("nativepodnetwork")
+	zap.L().Info("recorder setup")
+
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&npnv1beta1.NativePodNetwork{}).
 		WithOptions(controller.Options{MaxConcurrentReconciles: 20, CacheSyncTimeout: time.Hour}).

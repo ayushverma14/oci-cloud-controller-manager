@@ -34,7 +34,8 @@ import (
 	"github.com/oracle/oci-go-sdk/v50/core"
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
-	corev1 "k8s.io/api/core/v1"
+
+	//corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	"k8s.io/apimachinery/pkg/util/wait"
@@ -42,10 +43,12 @@ import (
 
 	clientset "k8s.io/client-go/kubernetes"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
-	typedcorev1 "k8s.io/client-go/kubernetes/typed/core/v1"
+
+	//typedcorev1 "k8s.io/client-go/kubernetes/typed/core/v1"
 	listersv1 "k8s.io/client-go/listers/core/v1"
 	"k8s.io/client-go/tools/cache"
-	"k8s.io/client-go/tools/record"
+
+	//"k8s.io/client-go/tools/record"
 	cloudprovider "k8s.io/cloud-provider"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
@@ -173,6 +176,7 @@ func init() {
 }
 
 // Initialize passes a Kubernetes clientBuilder interface to the cloud provider.
+//+kubebuilder:rbac:groups="",resources=events,verbs=create;patch
 func (cp *CloudProvider) Initialize(clientBuilder cloudprovider.ControllerClientBuilder, stop <-chan struct{}) {
 	var err error
 	cp.kubeclient, err = clientBuilder.Client("cloud-controller-manager")
@@ -226,17 +230,17 @@ func (cp *CloudProvider) Initialize(clientBuilder cloudprovider.ControllerClient
 		cp.logger.Info("NPNCR-CONTROLLER SETTING UP")
 		utilruntime.Must(clientgoscheme.AddToScheme(schemes))
 		utilruntime.Must(npnv1beta1.AddToScheme(schemes))
-		var kubClient clientset.Interface
-		cp.logger.Info("event recorder setting up ")
-		eveBroadCaster := record.NewBroadcaster()
-		cp.logger.Info("event recorder setting up 2")
-		eveBroadCaster.StartStructuredLogging(0)
-		cp.logger.Info("event recorder setting up 3")
-		eveBroadCaster.StartRecordingToSink(&typedcorev1.EventSinkImpl{
-			Interface: kubClient.CoreV1().Events(""),
-		})
-		cp.logger.Info("event recorder setting up 4")
-		recorder := eveBroadCaster.NewRecorder(schemes, corev1.EventSource{Component: "NPN_CR"})
+		// kubClient:= clientset.Interface.CoreV1()
+		// cp.logger.Info("event recorder setting up ")
+		// eveBroadCaster := record.NewBroadcaster()
+		// cp.logger.Info("event recorder setting up 2")
+		// eveBroadCaster.StartStructuredLogging(0)
+		// cp.logger.Info("event recorder setting up 3")
+		// eveBroadCaster.StartRecordingToSink(&typedcorev1.EventSinkImpl{
+		// 	Interface: kubClient.Events(""),
+		// })
+		// cp.logger.Info("event recorder setting up 4")
+		// recorder := eveBroadCaster.NewRecorder(schemes, corev1.EventSource{Component: "NPN_CR"})
 		cp.logger.Info("event recorder set up successfully")
 		mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), ctrl.Options{
 			Scheme:                  schemes,
@@ -308,7 +312,6 @@ func (cp *CloudProvider) Initialize(clientBuilder cloudprovider.ControllerClient
 				MetricPusher:     metricPusher,
 				OCIClient:        ociClient,
 				TimeTakenTracker: make(map[string]time.Time),
-				Recorder:         recorder,
 			}).SetupWithManager(mgr); err != nil {
 				npnSetupLog.Error(err, "unable to create controller", "controller", "NativePodNetwork")
 				os.Exit(1)
