@@ -34,8 +34,10 @@ import (
 	"github.com/oracle/oci-cloud-controller-manager/pkg/util"
 	"github.com/oracle/oci-go-sdk/v50/core"
 	"go.uber.org/zap"
+	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/client-go/tools/record"
 	"k8s.io/client-go/util/workqueue"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -74,6 +76,7 @@ type NativePodNetworkReconciler struct {
 	MetricPusher     *metrics.MetricPusher
 	OCIClient        ociclient.Interface
 	TimeTakenTracker map[string]time.Time
+	Recorder         record.EventRecorder
 }
 
 // VnicAttachmentResponse is used to store the response for attach VNIC
@@ -251,6 +254,7 @@ func (r *NativePodNetworkReconciler) Reconcile(ctx context.Context, req ctrl.Req
 	log.Info("Processing NativePodNetwork CR")
 	npn.Status.State = &STATE_IN_PROGRESS
 	npn.Status.Reason = &STATE_IN_PROGRESS
+	r.Recorder.Event(&npn, corev1.EventTypeNormal, "NPN Createion", "Processing NativePodNetwork CR")
 	err := r.Status().Update(context.Background(), &npn)
 	if err != nil {
 		login.Error(err, "failed to set status on CR")
@@ -275,7 +279,7 @@ func (r *NativePodNetworkReconciler) Reconcile(ctx context.Context, req ctrl.Req
 		}
 	}
 	login.Info("never joined the cluster")
-
+	r.Recorder.Event(&npn, corev1.EventTypeWarning, "NPN Createion", "Node never joined the cluster")
 	// In case the node never joined the cluster and the instance is deleted then remove the CR
 	if instance.LifecycleState == core.InstanceLifecycleStateTerminated {
 		err = r.Client.Delete(ctx, &npn)
@@ -287,6 +291,7 @@ func (r *NativePodNetworkReconciler) Reconcile(ctx context.Context, req ctrl.Req
 		return ctrl.Result{}, nil
 	}
 	login.Info("fetched the primaryVnic")
+	r.Recorder.Event(&npn, corev1.EventTypeNormal, "NPN Createion", "Fetched the PrimaryVnics")
 	primaryVnic, existingSecondaryVNICs, err := r.getPrimaryAndSecondaryVNICs(ctx, *instance.CompartmentId, *instance.Id)
 	if err != nil {
 		r.handleError(ctx, req, err, "GetVNIC")
@@ -306,6 +311,8 @@ func (r *NativePodNetworkReconciler) Reconcile(ctx context.Context, req ctrl.Req
 
 	existingSecondaryIpsbyVNIC, err := r.getSecondaryPrivateIpsByVNICs(ctx, existingSecondaryVNICs)
 	login.Info("fetched the SecondaryVnic")
+
+	r.Recorder.Event(&npn, corev1.EventTypeNormal, "NPN Createion", "Fetched the SecondaryVnics")
 	if err != nil {
 		r.handleError(ctx, req, err, "ListPrivateIP")
 		return ctrl.Result{}, err
@@ -342,7 +349,8 @@ func (r *NativePodNetworkReconciler) Reconcile(ctx context.Context, req ctrl.Req
 		r.PushMetric(VnicAttachmentResponseSlice(additionalVNICAttachments).ErrorMetric())
 		log.WithValues("requiredAdditionalSecondaryVNICs", requiredAdditionalSecondaryVNICs).Info("Allocated the required VNICs for instance")
 	}
-	login.Info("allocated the requiredAdditionalVnics")
+
+	r.Recorder.Event(&npn, corev1.EventTypeNormal, "NPN Creation", "Fetched the PRequiredAdditionalVnics")
 	_, existingSecondaryVNICs, err = r.getPrimaryAndSecondaryVNICs(ctx, *instance.CompartmentId, *instance.Id)
 	if err != nil {
 		r.handleError(ctx, req, err, "GetVNIC")
@@ -452,6 +460,7 @@ func (r *NativePodNetworkReconciler) Reconcile(ctx context.Context, req ctrl.Req
 	updateNPN.Status.State = &STATE_SUCCESS
 	updateNPN.Status.Reason = &COMPLETED
 	updateNPN.Status.VNICs = convertCoreVNICtoNPNStatus(existingSecondaryVNICs, existingSecondaryIpsbyVNIC)
+	r.Recorder.Event(&npn, corev1.EventTypeNormal, "NPN_CR Success", "NPN_CR created Successfully")
 	err = r.Status().Update(ctx, &updateNPN)
 	if err != nil {
 		login.Error(err, "failed to set status on CR")
