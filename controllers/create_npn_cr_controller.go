@@ -26,9 +26,13 @@ import (
 
 	"k8s.io/apimachinery/pkg/types"
 
+	"strings"
+
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/kubernetes"
+
+	"github.com/pkg/errors"
 
 	npnv1beta1 "github.com/oracle/oci-cloud-controller-manager/api/v1beta1"
 	providercfg "github.com/oracle/oci-cloud-controller-manager/pkg/cloudprovider/providers/oci/config"
@@ -45,6 +49,8 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 	"sigs.k8s.io/controller-runtime/pkg/source"
 )
+
+const providerPrefix = "oci://"
 
 var (
 	scheme         *runtime.Scheme = runtime.NewScheme()
@@ -177,11 +183,15 @@ func (r *NativePodNetworkNONOKEReconciler) Reconcile(ctx context.Context, reques
 						nsgIds = append(nsgIds, &cfg.NetworkSecurityGroupIds[i])
 					}
 					// initialising  NPN CR object
+					id, err := MapProviderIDToInstanceID(target_node.Spec.ProviderID)
+					if err != nil {
+						login.Error("Error", zap.Error(err))
+					}
 					var npn1 = &npnv1beta1.NativePodNetwork{
 						Spec: npnv1beta1.NativePodNetworkSpec{
 							MaxPodCount:             &cfg.MaxPodsperNode,
 							PodSubnetIds:            subnetIds,
-							Id:                      &cfg.Id,
+							Id:                      &id,
 							NetworkSecurityGroupIds: nsgIds,
 						},
 					}
@@ -189,7 +199,7 @@ func (r *NativePodNetworkNONOKEReconciler) Reconcile(ctx context.Context, reques
 					npn1.Name = target_node.Name
 
 					login.Info("Creating the NPN CR ")
-					err := r.Create(ctx, npn1)
+					err = r.Create(ctx, npn1)
 
 					login.Error("error", zap.Error(err))
 					login.Info("created the CR successfully")
@@ -244,4 +254,13 @@ func getLabel(node *v1.Node) bool {
 	}
 
 	return false
+}
+func MapProviderIDToInstanceID(providerID string) (string, error) {
+	if providerID == "" {
+		return providerID, errors.New("provider ID is empty")
+	}
+	if strings.HasPrefix(providerID, providerPrefix) {
+		return strings.TrimPrefix(providerID, providerPrefix), nil
+	}
+	return providerID, nil
 }
