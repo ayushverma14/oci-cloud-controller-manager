@@ -124,10 +124,7 @@ func AddController(mgr manager.Manager) error {
 	// Watch for changes to nodes  and trigger a Reconcile for the owner
 	err = c.Watch(
 		&source.Kind{Type: &v1.Node{}},
-		&handler.EnqueueRequestForOwner{
-			IsController: true,
-			OwnerType:    &npnv1beta1.NativePodNetwork{},
-		})
+		&handler.EnqueueRequestForObject{})
 
 	if err != nil {
 		log.Println(err, "err")
