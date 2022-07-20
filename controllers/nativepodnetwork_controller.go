@@ -44,7 +44,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
 	"sigs.k8s.io/controller-runtime/pkg/log"
-	"sigs.k8s.io/controller-runtime/pkg/recorder"
 )
 
 const (
@@ -475,10 +474,8 @@ func (r *NativePodNetworkReconciler) Reconcile(ctx context.Context, req ctrl.Req
 // SetupWithManager sets up the controller with the Manager.
 func (r *NativePodNetworkReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	zap.L().Sugar().Info("Setting up wth manager")
-	//r.Recorder = mgr.GetEventRecorderFor("nativepodnetwork")
-	var recorderProvider recorder.Provider
+	r.Recorder = mgr.GetEventRecorderFor("nativepodnetwork")
 
-	r.Recorder = recorderProvider.GetEventRecorderFor("my-controller")
 	zap.L().Info("recorder setup")
 
 	return ctrl.NewControllerManagedBy(mgr).
