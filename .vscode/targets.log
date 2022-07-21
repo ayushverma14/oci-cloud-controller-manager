@@ -6,7 +6,7 @@ make all --print-data-base --no-builtin-variables --no-builtin-rules --question
 # This is free software: you are free to change and redistribute it.
 # There is NO WARRANTY, to the extent permitted by law.
 
-# Make data base, printed on Mon Jul 18 13:41:04 2022
+# Make data base, printed on Fri Jul 22 09:29:14 2022
 
 # Variables
 
@@ -91,7 +91,7 @@ PWD = /home/ayusver/projects/oci-cloud-controller-manager-task-OKE-21135-release
 # makefile (from 'Makefile', line 15)
 PKG := github.com/oracle/oci-cloud-controller-manager
 # environment
-WSL_INTEROP = /run/WSL/24746_interop
+WSL_INTEROP = /run/WSL/9_interop
 # environment
 PULSE_SERVER = /mnt/wslg/PulseServer
 # environment
@@ -128,6 +128,7 @@ SHLVL = 1
 MAKE_VERSION := 4.2.1
 # makefile (from 'Makefile', line 24)
 OSS_REGISTRY = iad.ocir.io/oracle
+ 
 # environment
 USER = ayusver
 # makefile
@@ -171,7 +172,7 @@ MAKEFILES :=
 # makefile (from 'Makefile', line 29)
 COMPONENT = oci-cloud-controller-manager oci-volume-provisioner oci-flexvolume-driver oci-csi-controller-driver oci-csi-node-driver
 # makefile (from 'Makefile', line 34)
-BUILD := 39eb066f-dirty
+BUILD := 16ba27f0-dirty
 # automatic
 <F = $(notdir $<)
 # makefile (from 'Makefile', line 18)
@@ -199,11 +200,13 @@ LANG = C
 # environment
 TERM = xterm-256color
 # environment
-VSCODE_PID = 24780
+VSCODE_PID = 92
 # environment
 WSL_DISTRO_NAME = Ubuntu
+# environment
+MOTD_SHOWN = update-motd
 # variable set hash-table stats:
-# Load=96/1024=9%, Rehash=0, Collisions=12/146=8%
+# Load=97/1024=9%, Rehash=0, Collisions=12/147=8%
 
 # Pattern-specific Variable Values
 
@@ -274,7 +277,6 @@ npn-generate:
 
 # Not a target:
 .SUFFIXES:
- 
 #  Implicit rule search has not been done.
 #  Modification time never checked.
 #  File has not been updated.
@@ -291,7 +293,7 @@ push: image
 # Not a target:
 Makefile:
 #  Implicit rule search has been done.
-#  Last modified 2022-07-18 13:23:13.516170023
+#  Last modified 2022-07-19 12:15:39.005475399
 #  File has been updated.
 #  Successfully updated.
 
@@ -403,6 +405,7 @@ version:
 #  Modification time never checked.
 #  File has not been updated.
 
+ 
 image:
 #  Phony target (prerequisite of .PHONY).
 #  Implicit rule search has not been done.
@@ -561,6 +564,6 @@ docker-push-arm64:
 # strcache performance: lookups = 203 / hit rate = 67%
 # hash-table stats:
 # Load=65/8192=1%, Rehash=0, Collisions=1/203=0%
-# Finished Make data base on Mon Jul 18 13:41:04 2022
+# Finished Make data base on Fri Jul 22 09:29:14 2022
 
  

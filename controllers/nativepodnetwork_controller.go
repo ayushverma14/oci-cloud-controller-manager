@@ -23,24 +23,25 @@ import (
 	"sync"
 	"time"
 
+	npnv1beta1 "github.com/oracle/oci-cloud-controller-manager/api/v1beta1"
+	"github.com/oracle/oci-cloud-controller-manager/pkg/metrics"
+	ociclient "github.com/oracle/oci-cloud-controller-manager/pkg/oci/client"
+	"github.com/oracle/oci-cloud-controller-manager/pkg/util"
+	"github.com/oracle/oci-go-sdk/v50/core"
 	"go.uber.org/zap"
+	corev1 "k8s.io/api/core/v1"
 	v1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/wait"
+	"k8s.io/client-go/tools/record"
 	"k8s.io/client-go/util/workqueue"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"sigs.k8s.io/controller-runtime/pkg/log"
-
-	npnv1beta1 "github.com/oracle/oci-cloud-controller-manager/api/v1beta1"
-	"github.com/oracle/oci-cloud-controller-manager/pkg/metrics"
-	ociclient "github.com/oracle/oci-cloud-controller-manager/pkg/oci/client"
-	"github.com/oracle/oci-cloud-controller-manager/pkg/util"
-	"github.com/oracle/oci-go-sdk/v50/core"
 )
 
 const (
@@ -74,6 +75,7 @@ type NativePodNetworkReconciler struct {
 	MetricPusher     *metrics.MetricPusher
 	OCIClient        ociclient.Interface
 	TimeTakenTracker map[string]time.Time
+	Recorder         record.EventRecorder
 }
 
 // VnicAttachmentResponse is used to store the response for attach VNIC
@@ -249,6 +251,7 @@ func (r *NativePodNetworkReconciler) Reconcile(ctx context.Context, req ctrl.Req
 	login.Info("Processing NativePodNetwork CR")
 	npn.Status.State = &STATE_IN_PROGRESS
 	npn.Status.Reason = &STATE_IN_PROGRESS
+	r.Recorder.Event(&npn, corev1.EventTypeNormal, "NPN Creation", "Processing NativePodNetwork CR")
 	err := r.Status().Update(context.Background(), &npn)
 	if err != nil {
 		log.Error(err, "failed to set status on CR")
@@ -292,6 +295,7 @@ func (r *NativePodNetworkReconciler) Reconcile(ctx context.Context, req ctrl.Req
 		r.handleError(ctx, req, errPrimaryVnicNotFound, "GetPrimaryVNIC")
 		return ctrl.Result{}, errPrimaryVnicNotFound
 	}
+	r.Recorder.Event(&npn, corev1.EventTypeNormal, "NPN Creation", "Fetched the PrimaryVnics")
 	//nodeName := primaryVnic.PrivateIp
 	nodeName := npn.Name
 	log.WithValues("existingSecondaryVNICs", existingSecondaryVNICs).
@@ -308,7 +312,7 @@ func (r *NativePodNetworkReconciler) Reconcile(ctx context.Context, req ctrl.Req
 	log.WithValues("countOfExistingSecondaryIps", totalAllocatedSecondaryIPs).Info("Fetched existingSecondaryIp for instance")
 
 	requiredAdditionalSecondaryVNICs := requiredSecondaryVNICs - len(existingSecondaryVNICs)
-
+	r.Recorder.Event(&npn, corev1.EventTypeNormal, "NPN Creation", "Fetched the Existing SecondaryVnics")
 	if requiredAdditionalSecondaryVNICs > 0 {
 		log.WithValues("requiredAdditionalSecondaryVNICs", requiredAdditionalSecondaryVNICs).Info("Need to allocate VNICs for instance")
 		additionalVNICAttachments := make([]VnicAttachmentResponse, requiredAdditionalSecondaryVNICs)
@@ -446,7 +450,7 @@ func (r *NativePodNetworkReconciler) Reconcile(ctx context.Context, req ctrl.Req
 	updateNPN.Status.Reason = &COMPLETED
 	updateNPN.Status.VNICs = convertCoreVNICtoNPNStatus(existingSecondaryVNICs, existingSecondaryIpsbyVNIC)
 	login.Info("Updated and CR build success")
-
+	r.Recorder.Event(&npn, corev1.EventTypeNormal, "NPN_CR Success", "NPN_CR created Successfully")
 	err = r.Status().Update(ctx, &updateNPN)
 	if err != nil {
 		login.Error("failed to set ownerref on CR", zap.Error(err))
@@ -459,6 +463,10 @@ func (r *NativePodNetworkReconciler) Reconcile(ctx context.Context, req ctrl.Req
 // SetupWithManager sets up the controller with the Manager.
 func (r *NativePodNetworkReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	zap.L().Info("started reconciling---------------")
+	zap.L().Sugar().Info("Setting up wth manager")
+	r.Recorder = mgr.GetEventRecorderFor("nativepodnetwork")
+
+	zap.L().Info("recorder setup")
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&npnv1beta1.NativePodNetwork{}).
 		WithOptions(controller.Options{MaxConcurrentReconciles: 20, CacheSyncTimeout: time.Hour}).

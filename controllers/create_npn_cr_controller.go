@@ -32,12 +32,13 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/kubernetes"
 
-	"github.com/pkg/errors"
-
 	npnv1beta1 "github.com/oracle/oci-cloud-controller-manager/api/v1beta1"
 	providercfg "github.com/oracle/oci-cloud-controller-manager/pkg/cloudprovider/providers/oci/config"
+	"github.com/pkg/errors"
 	v1 "k8s.io/api/core/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/util/wait"
+
+	//metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
@@ -99,10 +100,7 @@ func AddController(mgr manager.Manager) error {
 	// Watch for changes to nodes  and trigger a Reconcile for the owner
 	err = c.Watch(
 		&source.Kind{Type: &v1.Node{}},
-		&handler.EnqueueRequestForOwner{
-			IsController: true,
-			OwnerType:    &npnv1beta1.NativePodNetwork{},
-		})
+		&handler.EnqueueRequestForObject{})
 
 	if err != nil {
 		logger.Sugar().Error(err)
@@ -125,110 +123,148 @@ func (r *NativePodNetworkNONOKEReconciler) Reconcile(ctx context.Context, reques
 	login.Info("Reconciling--------------------")
 	login.Info("Generating Kubernetes clientset")
 	// created a k8 clientset to fetch info about cluster
-	kcs, err := NewK8sClient("https://129.146.114.63:6443", "/etc/kubernetes/admin.conf")
+	//kcs, err := NewK8sClient("https://129.146.114.63:6443", "/etc/kubernetes/admin.conf")
 
-	login.Error("error", zap.Error(err))
+	//login.Error("error", zap.Error(err))
 
-	login.Info("Listing nodes")
+	//login.Info("Listing nodes")
 	// List all nodes available on the cluster
-	nodeName, err := ListNodes(kcs)
+	//nodeName, err := ListNodes(kcs)
 
-	login.Error("error", zap.Error(err))
+	// login.Error("error", zap.Error(err))
+	// if err != nil {
+	// 	login.Error("error", zap.Error(err))
+	// 	return reconcile.Result{}, err
+	// }
+
+	login.Info("fetched info about node")
+	////////////////////////////////////
+	// Loop to check whether the node has a lablel npn attached if yes check if the CR exist else create it
+	//for j := range nodeName {
+	target_node, err := r.getNodeObject(ctx, request.NamespacedName)
+	label := getLabel((target_node))
+	login.Info(target_node.Name)
+	login.Sugar().Info(label)
 	if err != nil {
 		login.Error("error", zap.Error(err))
 		return reconcile.Result{}, err
 	}
 
-	login.Info("fetched info about node")
-	////////////////////////////////////
-	// Loop to check whether the node has a lablel npn attached if yes check if the CR exist else create it
-	for j := range nodeName {
-		target_node := nodeName[j]
-		label := getLabel((&target_node))
-		login.Info(target_node.Name)
-		login.Sugar().Info(label)
+	if label {
+		// checking if npn cr exists or not
+		err := r.Get(ctx, types.NamespacedName{
+			Name: target_node.Name,
+		}, npn)
+		if err != nil {
+			login.Info("npn not present on node ")
+			login.Error("error", zap.Error(err))
+			log.Println(err)
 
-		if label {
-			// checking if npn cr exists or not
-			err = r.Get(ctx, types.NamespacedName{
-				Name: nodeName[j].Name,
-			}, npn)
-			if err != nil {
-				login.Info("npn not present on node ")
-				login.Error("error", zap.Error(err))
-				log.Println(err)
+			if apierrors.IsNotFound(err) {
+				// Object not found, return.  Created objects are automatically garbage collected.
+				// For additional cleanup logic use finalizers.
+				login.Info("creating npn cr on node")
 
-				if apierrors.IsNotFound(err) {
-					// Object not found, return.  Created objects are automatically garbage collected.
-					// For additional cleanup logic use finalizers.
-					login.Info("creating npn cr on node")
+				login.Info("Reading config")
 
-					login.Info("Reading config")
+				configPath := configFilePath
 
-					configPath := configFilePath
+				cfg1 := providercfg.GetConfig(login.Sugar(), configPath)
 
-					cfg1 := providercfg.GetConfig(login.Sugar(), configPath)
-
-					cgf_temp := *cfg1
-					cfg := cgf_temp.Specs
-					login.Sugar().Info(cfg)
-					login.Info("creating subnets ids for cr on node")
-					subnetIds := []*string{}
-					for i := range cfg.PodSubnetId {
-						subnetIds = append(subnetIds, &cfg.PodSubnetId[i])
-					}
-					login.Info("creating NSGids for cr  on node")
-					nsgIds := []*string{}
-					for i := range cfg.NetworkSecurityGroupIds {
-						nsgIds = append(nsgIds, &cfg.NetworkSecurityGroupIds[i])
-					}
-					// initialising  NPN CR object
-					id, err := MapProviderIDToInstanceID(target_node.Spec.ProviderID)
-					if err != nil {
-						login.Error("Error", zap.Error(err))
-					}
-					var npn1 = &npnv1beta1.NativePodNetwork{
-						Spec: npnv1beta1.NativePodNetworkSpec{
-							MaxPodCount:             &cfg.MaxPodsperNode,
-							PodSubnetIds:            subnetIds,
-							Id:                      &id,
-							NetworkSecurityGroupIds: nsgIds,
-						},
-					}
-
-					npn1.Name = target_node.Name
-
-					login.Info("Creating the NPN CR ")
-					err = r.Create(ctx, npn1)
-
-					login.Error("error", zap.Error(err))
-					login.Info("created the CR successfully")
-					return reconcile.Result{}, nil
+				cgf_temp := *cfg1
+				cfg := cgf_temp.Specs
+				login.Sugar().Info(cfg)
+				login.Info("creating subnets ids for cr on node")
+				subnetIds := []*string{}
+				for i := range cfg.PodSubnetId {
+					subnetIds = append(subnetIds, &cfg.PodSubnetId[i])
 				}
-				// Error reading the object - requeue the request.
-				return reconcile.Result{}, err
-			} else {
-				login.Info("npn  already present on node")
+				login.Info("creating NSGids for cr  on node")
+				nsgIds := []*string{}
+				for i := range cfg.NetworkSecurityGroupIds {
+					nsgIds = append(nsgIds, &cfg.NetworkSecurityGroupIds[i])
+				}
+				// initialising  NPN CR object
+				id, err := MapProviderIDToInstanceID(target_node.Spec.ProviderID)
+				if err != nil {
+					login.Error("Error", zap.Error(err))
+				}
+				var npn1 = &npnv1beta1.NativePodNetwork{
+					Spec: npnv1beta1.NativePodNetworkSpec{
+						MaxPodCount:             &cfg.MaxPodsperNode,
+						PodSubnetIds:            subnetIds,
+						Id:                      &id,
+						NetworkSecurityGroupIds: nsgIds,
+					},
+				}
+
+				npn1.Name = target_node.Name
+
+				login.Info("Creating the NPN CR ")
+				err = r.Create(ctx, npn1)
+
+				login.Error("error", zap.Error(err))
+				login.Info("created the CR successfully")
+				return reconcile.Result{}, nil
 			}
-			login.Info("npn present on node")
+			// Error reading the object - requeue the request.
+			return reconcile.Result{}, err
+		} else {
+			login.Info("npn  already present on node")
 		}
+		login.Info("npn present on node")
 	}
-	return reconcile.Result{}, err
+	//}
+	return reconcile.Result{}, nil
 }
 
 // function to list all nodes availabe on cluster
-func ListNodes(clientset kubernetes.Interface) ([]v1.Node, error) {
-	nodes, err := clientset.CoreV1().Nodes().List(context.TODO(), metav1.ListOptions{})
-	login := zap.L()
+// func ListNodes(clientset kubernetes.Interface) ([]v1.Node, error) {
+// 	nodes, err := clientset.CoreV1().Nodes().List(context.TODO(), metav1.ListOptions{})
+// 	login := zap.L()
 
-	if err != nil {
-		login.Error("error", zap.Error(err))
-		return nil, err
+// 	if err != nil {
+// 		login.Error("error", zap.Error(err))
+// 		return nil, err
 
+// 	}
+// 	login.Debug("nodes", zap.Any("list", nodes.Items))
+
+// 	return nodes.Items, nil
+// }
+func (r NativePodNetworkNONOKEReconciler) getNodeObject(ctx context.Context, cr types.NamespacedName) (*v1.Node, error) {
+	//log := log.FromContext(ctx, "namespacedName", cr).WithValues("nodeName", nodeName)
+	log := zap.L().Sugar()
+	nodeObject := v1.Node{}
+	nodePresentInCluster := func() (bool, error) {
+		ctx, cancel := context.WithTimeout(ctx, time.Second*30)
+		defer cancel()
+		err := r.Client.Get(ctx, types.NamespacedName{
+			Name: cr.Name,
+		}, &nodeObject)
+		if err != nil {
+			if apierrors.IsNotFound(err) {
+				log.Error(err, "node object does not exist in cluster")
+				return false, nil
+			}
+			log.Error(err, "failed to get node object")
+			return false, err
+		}
+		return true, nil
 	}
-	login.Debug("nodes", zap.Any("list", nodes.Items))
 
-	return nodes.Items, nil
+	err := wait.PollImmediate(time.Second*5, GetNodeTimeout, func() (bool, error) {
+		present, err := nodePresentInCluster()
+		if err != nil {
+			log.Error(err, "failed to get node from cluster")
+			return false, err
+		}
+		return present, nil
+	})
+	if err != nil {
+		log.Error(err, "timed out waiting for node object to be present in the cluster")
+	}
+	return &nodeObject, err
 }
 
 // function to generate a K8 client for accessing info og the cluster
