@@ -255,7 +255,7 @@ func (r *NativePodNetworkReconciler) Reconcile(ctx context.Context, req ctrl.Req
 	log.Info("Processing NativePodNetwork CR")
 	npn.Status.State = &STATE_IN_PROGRESS
 	npn.Status.Reason = &STATE_IN_PROGRESS
-	r.Recorder.Event(&npn, corev1.EventTypeNormal, "NPN Createion", "Processing NativePodNetwork CR")
+	r.Recorder.Event(&npn, corev1.EventTypeNormal, "NPN Creation", "Processing NativePodNetwork CR")
 	err := r.Status().Update(context.Background(), &npn)
 	if err != nil {
 		login.Error(err, "failed to set status on CR")
@@ -280,7 +280,7 @@ func (r *NativePodNetworkReconciler) Reconcile(ctx context.Context, req ctrl.Req
 		}
 	}
 	login.Info("never joined the cluster")
-	r.Recorder.Event(&npn, corev1.EventTypeWarning, "NPN Createion", "Node never joined the cluster")
+	//r.Recorder.Event(&npn, corev1.EventTypeWarning, "NPN Createion", "Node never joined the cluster")
 	// In case the node never joined the cluster and the instance is deleted then remove the CR
 	if instance.LifecycleState == core.InstanceLifecycleStateTerminated {
 		err = r.Client.Delete(ctx, &npn)
@@ -289,10 +289,11 @@ func (r *NativePodNetworkReconciler) Reconcile(ctx context.Context, req ctrl.Req
 			return ctrl.Result{}, client.IgnoreNotFound(err)
 		}
 		login.Info("Deleted the CR for Terminated compute instance")
+		r.Recorder.Event(&npn, corev1.EventTypeWarning, "NPN Creation fail ", "Deleted the CR for Terminated compute instance")
 		return ctrl.Result{}, nil
 	}
 	login.Info("fetched the primaryVnic")
-	r.Recorder.Event(&npn, corev1.EventTypeNormal, "NPN Createion", "Fetched the PrimaryVnics")
+	r.Recorder.Event(&npn, corev1.EventTypeNormal, "NPN Creation", "Fetched the PrimaryVnics")
 	primaryVnic, existingSecondaryVNICs, err := r.getPrimaryAndSecondaryVNICs(ctx, *instance.CompartmentId, *instance.Id)
 	if err != nil {
 		r.handleError(ctx, req, err, "GetVNIC")
@@ -313,7 +314,7 @@ func (r *NativePodNetworkReconciler) Reconcile(ctx context.Context, req ctrl.Req
 	existingSecondaryIpsbyVNIC, err := r.getSecondaryPrivateIpsByVNICs(ctx, existingSecondaryVNICs)
 	login.Info("fetched the SecondaryVnic")
 
-	r.Recorder.Event(&npn, corev1.EventTypeNormal, "NPN Createion", "Fetched the SecondaryVnics")
+	r.Recorder.Event(&npn, corev1.EventTypeNormal, "NPN Creation", "Fetched the Existing SecondaryVnics")
 	if err != nil {
 		r.handleError(ctx, req, err, "ListPrivateIP")
 		return ctrl.Result{}, err
