@@ -160,7 +160,7 @@ type Config struct {
 
 	Specs Spec `yaml:"spec"`
 
-	EnableNIC bool `yaml:"enableNIC"`
+	EnableNIC bool `yaml:"enableNPN"`
 	// UseServicePrincipals when set to true, clients will use an instance principal to fetch the s2s token
 	// from identity.
 	UseServicePrincipals bool `yaml:"UseServicePrincipals"`
