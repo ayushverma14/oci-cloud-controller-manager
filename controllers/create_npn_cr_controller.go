@@ -30,7 +30,6 @@ import (
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/client-go/kubernetes"
 
 	npnv1beta1 "github.com/oracle/oci-cloud-controller-manager/api/v1beta1"
 	providercfg "github.com/oracle/oci-cloud-controller-manager/pkg/cloudprovider/providers/oci/config"
@@ -38,12 +37,9 @@ import (
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/util/wait"
 
-	//metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
-
-	"k8s.io/client-go/tools/clientcmd"
 
 	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
@@ -121,30 +117,11 @@ func (r *NativePodNetworkNONOKEReconciler) Reconcile(ctx context.Context, reques
 	login := zap.L()
 
 	login.Info("Reconciling--------------------")
-	login.Info("Generating Kubernetes clientset")
-	// created a k8 clientset to fetch info about cluster
-	//kcs, err := NewK8sClient("https://129.146.114.63:6443", "/etc/kubernetes/admin.conf")
 
-	//login.Error("error", zap.Error(err))
-
-	//login.Info("Listing nodes")
-	// List all nodes available on the cluster
-	//nodeName, err := ListNodes(kcs)
-
-	// login.Error("error", zap.Error(err))
-	// if err != nil {
-	// 	login.Error("error", zap.Error(err))
-	// 	return reconcile.Result{}, err
-	// }
-
-	login.Info("fetched info about node")
-	////////////////////////////////////
-	// Loop to check whether the node has a lablel npn attached if yes check if the CR exist else create it
-	//for j := range nodeName {
 	target_node, err := r.getNodeObject(ctx, request.NamespacedName)
 	label := getLabel((target_node))
-	login.Info(target_node.Name)
-	login.Sugar().Info(label)
+	login.Sugar().Infof("fetched info about node: %+v", target_node.Name)
+	login.Sugar().Infof("NPN label on node %+v:%+v", target_node.Name, label)
 	if err != nil {
 		login.Error("error", zap.Error(err))
 		return reconcile.Result{}, err
@@ -156,7 +133,7 @@ func (r *NativePodNetworkNONOKEReconciler) Reconcile(ctx context.Context, reques
 			Name: target_node.Name,
 		}, npn)
 		if err != nil {
-			login.Info("npn not present on node ")
+			login.Sugar().Infof("npn not present on node: %+v ", target_node.Name)
 			login.Error("error", zap.Error(err))
 			log.Println(err)
 
@@ -214,24 +191,11 @@ func (r *NativePodNetworkNONOKEReconciler) Reconcile(ctx context.Context, reques
 		}
 		login.Info("npn present on node")
 	}
-	//}
+
 	return reconcile.Result{}, nil
 }
 
-// function to list all nodes availabe on cluster
-// func ListNodes(clientset kubernetes.Interface) ([]v1.Node, error) {
-// 	nodes, err := clientset.CoreV1().Nodes().List(context.TODO(), metav1.ListOptions{})
-// 	login := zap.L()
-
-// 	if err != nil {
-// 		login.Error("error", zap.Error(err))
-// 		return nil, err
-
-// 	}
-// 	login.Debug("nodes", zap.Any("list", nodes.Items))
-
-// 	return nodes.Items, nil
-// }
+// function fetches info about node object
 func (r NativePodNetworkNONOKEReconciler) getNodeObject(ctx context.Context, cr types.NamespacedName) (*v1.Node, error) {
 	//log := log.FromContext(ctx, "namespacedName", cr).WithValues("nodeName", nodeName)
 	log := zap.L().Sugar()
@@ -268,16 +232,6 @@ func (r NativePodNetworkNONOKEReconciler) getNodeObject(ctx context.Context, cr 
 }
 
 // function to generate a K8 client for accessing info og the cluster
-func NewK8sClient(masterUrl, kubeconfigPath string) (kubernetes.Interface, error) {
-	// use the current context in kubeconfig
-	config, err := clientcmd.BuildConfigFromFlags(masterUrl, kubeconfigPath)
-	if err != nil {
-		return nil, err
-	}
-
-	// create the clientset
-	return kubernetes.NewForConfig(config)
-}
 
 // function to fetch npn label
 func getLabel(node *v1.Node) bool {
