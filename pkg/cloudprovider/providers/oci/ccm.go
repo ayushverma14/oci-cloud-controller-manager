@@ -131,25 +131,13 @@ func NewCloudProvider(config *providercfg.Config) (cloudprovider.Interface, erro
 		config.VCNID = *subnet.VcnId
 	}
 
-	//metricPusher, err := metrics.NewMetricPusher(logger.Sugar())
-	// if err != nil {
-	// 	//logger.Sugar().With("error", err).Error("Metrics collection could not be enabled")
-	// 	// disable metrics
-	// 	metricPusher = nil
-	// }
-
-	// if metricPusher != nil {
-	// 	logger.Info("Metrics collection has been enabled")
-	// } else {
-	// 	logger.Info("Metrics collection has not been enabled")
-	// }
 
 	return &CloudProvider{
 		client:        c,
 		config:        config,
 		logger:        logger.Sugar(),
 		instanceCache: cache.NewTTLStore(instanceCacheKeyFn, time.Duration(24)*time.Hour),
-		//metricPusher:  metricPusher,
+		
 	}, nil
 }
 
@@ -225,8 +213,7 @@ func (cp *CloudProvider) Initialize(clientBuilder cloudprovider.ControllerClient
 	if enableNIC {
 		cp.logger.Info("NPNCR-CONTROLLER")
 		wg.Add(1)
-		// logger = logger.With(zap.String("component", "npncr-controller"))
-		// ctrl.SetLogger(zapr.NewLogger(logger.Desugar()))
+		
 		cp.logger.Info("NPN_CR controller is enabled.")
 		defer wg.Done()
 		cp.logger.Info("NPNCR-CONTROLLER SETTING UP")
@@ -257,7 +244,7 @@ func (cp *CloudProvider) Initialize(clientBuilder cloudprovider.ControllerClient
 
 		wg.Add(1)
 		logger := cp.logger.With(zap.String("component", "npn-controller"))
-		//ctrl.SetLogger(zapr.NewLogger(logger.Desugar()))
+		
 		cp.logger.Info("NPN controller is enabled.")
 		go func() {
 			defer wg.Done()
