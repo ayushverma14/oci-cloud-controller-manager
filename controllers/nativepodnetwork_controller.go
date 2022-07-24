@@ -308,11 +308,11 @@ func (r *NativePodNetworkReconciler) Reconcile(ctx context.Context, req ctrl.Req
 		return ctrl.Result{}, err
 	}
 	totalAllocatedSecondaryIPs := totalAllocatedSecondaryIpsForInstance(existingSecondaryIpsbyVNIC)
-	login.Sugar().Infof("totalAllocatedSecondaryVnics: %+v", totalAllocatedSecondaryIPs)
+	login.Sugar().Infof("totalAllocatedSecondaryIPs: %+v", totalAllocatedSecondaryIPs)
 	log.WithValues("countOfExistingSecondaryIps", totalAllocatedSecondaryIPs).Info("Fetched existingSecondaryIp for instance")
 
 	requiredAdditionalSecondaryVNICs := requiredSecondaryVNICs - len(existingSecondaryVNICs)
-	r.Recorder.Event(&npn, corev1.EventTypeNormal, "NPN Creation", "Fetched the Existing SecondaryVnics")
+	r.Recorder.Event(&npn, corev1.EventTypeNormal, "NPN Creation", "Fetched the RequiredSecondaryVnics")
 	if requiredAdditionalSecondaryVNICs > 0 {
 		log.WithValues("requiredAdditionalSecondaryVNICs", requiredAdditionalSecondaryVNICs).Info("Need to allocate VNICs for instance")
 		additionalVNICAttachments := make([]VnicAttachmentResponse, requiredAdditionalSecondaryVNICs)
@@ -445,17 +445,18 @@ func (r *NativePodNetworkReconciler) Reconcile(ctx context.Context, req ctrl.Req
 		login.Error("failed to set ownerref on CR", zap.Error(err))
 		return ctrl.Result{}, err
 	}
-
+	r.Recorder.Event(&npn, corev1.EventTypeNormal, "NPN_CR Success", "NPN_CR created Successfully")
 	updateNPN.Status.State = &STATE_SUCCESS
 	updateNPN.Status.Reason = &COMPLETED
 	updateNPN.Status.VNICs = convertCoreVNICtoNPNStatus(existingSecondaryVNICs, existingSecondaryIpsbyVNIC)
 	login.Info("Updated and CR build success")
-	r.Recorder.Event(&npn, corev1.EventTypeNormal, "NPN_CR Success", "NPN_CR created Successfully")
+
 	err = r.Status().Update(ctx, &updateNPN)
 	if err != nil {
 		login.Error("failed to set ownerref on CR", zap.Error(err))
 		return ctrl.Result{}, err
 	}
+
 	r.PushMetric(endToEndLatencySlice{{time.Since(startTime).Seconds()}}.ErrorMetric())
 	return ctrl.Result{}, nil
 }
